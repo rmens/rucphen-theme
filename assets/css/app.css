@@ -1,0 +1,196 @@
+/* Radio Rucphen - voorgebouwde fallback styling.
+ * Voer `npm run build:css` uit om de volledige Tailwind 4.x build te genereren
+ * die deze file overschrijft.
+ */
+
+:root {
+	--color-rucphen-blue: #003576;
+	--color-rucphen-blue-dark: #00254f;
+	--color-rucphen-yellow: #ffde00;
+	--color-rucphen-cyan: #00a7df;
+	--color-rucphen-ink: #0f172a;
+	--color-rucphen-surface: #f8fafc;
+	--color-rucphen-muted: #64748b;
+	--radius-card: 8px;
+	--radius-pill: 999px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--color-rucphen-surface); color: var(--color-rucphen-ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; padding-bottom: 72px; }
+img { max-width: 100%; height: auto; }
+a { color: var(--color-rucphen-blue); }
+a:hover { color: var(--color-rucphen-blue-dark); }
+
+.screen-reader-text {
+	position: absolute !important;
+	width: 1px; height: 1px;
+	margin: -1px; padding: 0;
+	border: 0; overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+.rucphen-live-hero {
+	position: relative;
+	min-height: 60vh;
+	display: flex;
+	align-items: flex-end;
+	color: #fff;
+	background: linear-gradient(180deg, rgba(0,53,118,0.85) 0%, rgba(0,37,79,0.95) 100%) center/cover no-repeat, var(--color-rucphen-blue-dark);
+	padding: 3rem 1.5rem;
+}
+.rucphen-live-hero__inner { max-width: 960px; margin: 0 auto; width: 100%; }
+.rucphen-live-hero__eyebrow { letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.875rem; opacity: 0.9; margin: 0; }
+.rucphen-live-hero__title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; margin: 0.5rem 0 1rem; line-height: 1.15; }
+.rucphen-live-hero__now { font-size: 1.125rem; opacity: 0.95; min-height: 1.5em; margin: 0; }
+.rucphen-live-hero__play {
+	display: inline-flex; align-items: center; gap: 0.75rem;
+	margin-top: 1.5rem;
+	background: var(--color-rucphen-yellow); color: var(--color-rucphen-ink);
+	border: none; border-radius: var(--radius-pill);
+	padding: 0.875rem 1.5rem; font-weight: 700; cursor: pointer;
+	font-size: 1rem;
+}
+.rucphen-live-hero__play:hover { filter: brightness(0.95); }
+
+.rucphen-sticky-player {
+	position: fixed; bottom: 0; left: 0; right: 0;
+	background: var(--color-rucphen-blue); color: #fff;
+	display: flex; align-items: center; gap: 0.75rem;
+	padding: 0.5rem 1rem;
+	z-index: 60;
+	box-shadow: 0 -4px 14px rgba(15,23,42,0.2);
+}
+.rucphen-sticky-player__cover {
+	width: 44px; height: 44px; border-radius: 6px; background: rgba(255,255,255,0.1);
+	background-size: cover; background-position: center; flex-shrink: 0;
+}
+.rucphen-sticky-player__meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.rucphen-sticky-player__title { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rucphen-sticky-player__artist { font-size: 0.875rem; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rucphen-sticky-player__toggle {
+	background: var(--color-rucphen-yellow); color: var(--color-rucphen-ink);
+	border: none; border-radius: 999px; width: 44px; height: 44px;
+	display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+	flex-shrink: 0;
+}
+.rucphen-sticky-player__toggle .icon-pause { display: none; }
+.rucphen-sticky-player.is-playing .icon-play { display: none; }
+.rucphen-sticky-player.is-playing .icon-pause { display: inline; }
+.rucphen-sticky-player__volume { display: none; }
+@media (min-width: 768px) { .rucphen-sticky-player__volume { display: inline-flex; align-items: center; } }
+
+.rucphen-card {
+	display: block; background: #fff; border-radius: var(--radius-card);
+	overflow: hidden; text-decoration: none; color: inherit;
+	box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	position: relative;
+}
+.rucphen-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(15,23,42,0.12); }
+.rucphen-card__image { width: 100%; height: 12rem; object-fit: cover; display: block; }
+.rucphen-card__body { padding: 1rem 1.125rem 1.25rem; }
+.rucphen-card__title { margin: 0.25rem 0 0.5rem; font-size: 1.125rem; font-weight: 700; }
+.rucphen-card__excerpt { margin: 0; color: var(--color-rucphen-muted); font-size: 0.9375rem; }
+.rucphen-card__pill {
+	display: inline-block; background: var(--color-rucphen-cyan); color: #fff;
+	font-size: 0.75rem; font-weight: 700; padding: 0.125rem 0.5rem; border-radius: var(--radius-pill);
+}
+.rucphen-card__footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; font-size: 0.8125rem; color: var(--color-rucphen-muted); }
+.rucphen-card__play {
+	position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+	background: rgba(0,53,118,0.85); color: #fff;
+	width: 56px; height: 56px; border-radius: 999px;
+	display: inline-flex; align-items: center; justify-content: center;
+	pointer-events: none;
+}
+
+.rucphen-featured-programs,
+.rucphen-news-grid,
+.rucphen-video-grid,
+.rucphen-events,
+.rucphen-frequencies { margin: 2.5rem 0; padding: 0 1rem; max-width: 1200px; margin-left: auto; margin-right: auto; }
+
+.rucphen-featured-programs__grid,
+.rucphen-news-grid__items,
+.rucphen-video-grid__items {
+	display: grid; gap: 1.25rem;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	margin-top: 1rem;
+}
+
+.rucphen-schedule { background: #fff; padding: 1.5rem; border-radius: var(--radius-card); margin: 2rem auto; max-width: 1200px; }
+.rucphen-schedule__tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+.rucphen-schedule__tabs button {
+	background: var(--color-rucphen-surface); color: var(--color-rucphen-ink);
+	border: 1px solid #e2e8f0; padding: 0.5rem 0.875rem; border-radius: var(--radius-pill);
+	cursor: pointer; font-weight: 600;
+}
+.rucphen-schedule__tabs button[aria-selected="true"] { background: var(--color-rucphen-blue); color: #fff; border-color: var(--color-rucphen-blue); }
+.rucphen-schedule__list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+.rucphen-schedule__item {
+	display: grid; grid-template-columns: 7rem 1fr auto; gap: 1rem;
+	padding: 0.75rem; border-radius: 6px; background: var(--color-rucphen-surface);
+	align-items: center;
+}
+.rucphen-schedule__time { font-weight: 700; color: var(--color-rucphen-blue); }
+.rucphen-schedule__presenters { color: var(--color-rucphen-muted); font-size: 0.875rem; }
+@media (max-width: 600px) {
+	.rucphen-schedule__item { grid-template-columns: 1fr; gap: 0.25rem; }
+}
+
+.rucphen-events__list { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 0.75rem; }
+.rucphen-events__item {
+	display: grid; grid-template-columns: 4.5rem 1fr; gap: 1rem;
+	background: #fff; padding: 1rem; border-radius: var(--radius-card);
+	box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+}
+.rucphen-events__date {
+	display: flex; flex-direction: column; align-items: center; justify-content: center;
+	background: var(--color-rucphen-blue); color: #fff;
+	border-radius: 6px; padding: 0.5rem;
+}
+.rucphen-events__day { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.rucphen-events__month { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+.rucphen-events__title { margin: 0 0 0.25rem; font-size: 1.125rem; }
+.rucphen-events__location { margin: 0; color: var(--color-rucphen-muted); }
+.rucphen-events__link { display: inline-block; margin-top: 0.5rem; font-weight: 600; }
+
+.rucphen-frequencies__grid {
+	display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	margin-top: 1rem;
+}
+.rucphen-frequencies__grid > div { background: #fff; padding: 1rem; border-radius: var(--radius-card); box-shadow: 0 1px 3px rgba(15,23,42,0.08); }
+.rucphen-frequencies__grid dt { font-size: 0.875rem; color: var(--color-rucphen-muted); }
+.rucphen-frequencies__grid dd { margin: 0.25rem 0 0; font-size: 1.5rem; font-weight: 700; color: var(--color-rucphen-blue); }
+
+.rucphen-cta-whatsapp {
+	display: inline-flex; align-items: center; gap: 0.5rem;
+	background: #25d366; color: #fff; padding: 0.75rem 1.25rem;
+	border-radius: var(--radius-pill); text-decoration: none; font-weight: 700;
+	margin: 1rem 0;
+}
+.rucphen-cta-whatsapp:hover { color: #fff; filter: brightness(0.95); }
+
+.rucphen-header { padding: 1rem; background: #fff; border-bottom: 1px solid #e2e8f0; }
+.rucphen-header__inner { max-width: 1200px; margin: 0 auto; }
+.rucphen-footer { background: var(--color-rucphen-blue-dark); color: #fff; padding: 2rem 1rem; }
+.rucphen-footer a { color: var(--color-rucphen-yellow); }
+.rucphen-footer__copyright { margin-top: 1.5rem; opacity: 0.8; }
+
+.rucphen-search-overlay[open] {
+	position: fixed; inset: 0; max-width: 100%; max-height: 100%;
+	width: 100%; height: 100%;
+	background: rgba(15,23,42,0.92); color: #fff;
+	border: none; padding: 2rem;
+}
+.rucphen-search-overlay__form { display: flex; gap: 0.5rem; flex-wrap: wrap; max-width: 600px; margin: 0 auto; }
+.rucphen-search-overlay__form input[type="search"] {
+	flex: 1; min-width: 0; padding: 0.75rem 1rem; border-radius: var(--radius-pill); border: none;
+	font-size: 1rem;
+}
+.rucphen-search-overlay__results { max-width: 600px; margin: 1rem auto; }
+.rucphen-search-result { display: block; background: rgba(255,255,255,0.06); color: #fff; padding: 0.75rem 1rem; border-radius: 6px; margin: 0.5rem 0; text-decoration: none; }
+.rucphen-search-result strong { display: block; }
+.rucphen-search-result p { margin: 0.25rem 0 0; opacity: 0.8; font-size: 0.9375rem; }
