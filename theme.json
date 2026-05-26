@@ -22,7 +22,10 @@
                 { "slug": "accent", "color": "#FFDE00", "name": "Accent" },
                 { "slug": "cyan", "color": "#00A7DF", "name": "Cyan" },
                 { "slug": "ink", "color": "#0F172A", "name": "Inkt" },
+                { "slug": "ink-soft", "color": "#475569", "name": "Inkt zacht" },
                 { "slug": "surface", "color": "#F8FAFC", "name": "Oppervlak" },
+                { "slug": "bg-app", "color": "#F4F7FB", "name": "Pagina achtergrond" },
+                { "slug": "line", "color": "#E2E8F0", "name": "Lijn" },
                 { "slug": "white", "color": "#FFFFFF", "name": "Wit" },
                 { "slug": "muted", "color": "#64748B", "name": "Gedempt" }
             ]
@@ -68,11 +71,17 @@
             "style": true,
             "width": true
         }
-    },
-    "styles": {
+        },
+        "styles": {
         "color": {
-            "background": "var(--wp--preset--color--surface)",
+            "background": "var(--wp--preset--color--bg-app)",
             "text": "var(--wp--preset--color--ink)"
+        },
+        "spacing": {
+            "blockGap": "0",
+            "padding": {
+                "bottom": "calc(var(--player-height) + env(safe-area-inset-bottom))"
+            }
         },
         "typography": {
             "fontFamily": "var(--wp--preset--font-family--sans)",
@@ -81,8 +90,7 @@
         },
         "elements": {
             "link": {
-                "color": { "text": "var(--wp--preset--color--brand)" },
-                ":hover": { "color": { "text": "var(--wp--preset--color--brand-dark)" } }
+                "typography": { "textDecoration": "none" }
             },
             "h1": { "typography": { "fontFamily": "var(--wp--preset--font-family--display)", "fontWeight": "800", "lineHeight": "1.1" } },
             "h2": { "typography": { "fontFamily": "var(--wp--preset--font-family--display)", "fontWeight": "800", "lineHeight": "1.15" } },
@@ -103,14 +111,42 @@
         }
     },
     "customTemplates": [
+        { "name": "page-contact", "title": "Contact", "postTypes": ["page"] },
+        { "name": "page-frequenties", "title": "Frequenties", "postTypes": ["page"] },
         { "name": "page-nieuws", "title": "Nieuwsoverzicht", "postTypes": ["page"] },
-        { "name": "page-video", "title": "Video-overzicht", "postTypes": ["page"] }
+        { "name": "page-video", "title": "Video-overzicht", "postTypes": ["page"] },
+        { "name": "page-over-ons", "title": "Over ons", "postTypes": ["page"] },
+        { "name": "page-nieuwsbrief", "title": "Nieuwsbrief", "postTypes": ["page"] },
+        { "name": "page-colofon", "title": "Colofon", "postTypes": ["page"] },
+        { "name": "page-cookies", "title": "Cookies", "postTypes": ["page"] },
+        { "name": "page-disclaimer", "title": "Disclaimer", "postTypes": ["page"] },
+        { "name": "page-privacy", "title": "Privacy", "postTypes": ["page"] }
     ],
     "templateParts": [
         { "name": "header", "title": "Header", "area": "header" },
         { "name": "footer", "title": "Footer", "area": "footer" },
         { "name": "sticky-player", "title": "Sticky player", "area": "uncategorized" },
-        { "name": "mobile-menu", "title": "Mobiel menu", "area": "uncategorized" },
-        { "name": "search-overlay", "title": "Zoek-overlay", "area": "uncategorized" }
+        { "name": "site-end", "title": "Site einde", "area": "uncategorized" },
+        { "name": "front-page-content", "title": "Homepage inhoud", "area": "uncategorized" },
+        { "name": "program-archive-content", "title": "Programmagids inhoud", "area": "uncategorized" },
+        { "name": "program-single-content", "title": "Programma detail inhoud", "area": "uncategorized" },
+        { "name": "presenter-archive-content", "title": "Presentatoren inhoud", "area": "uncategorized" },
+        { "name": "presenter-single-content", "title": "Presentator detail inhoud", "area": "uncategorized" },
+        { "name": "podcast-archive-content", "title": "Podcast archief inhoud", "area": "uncategorized" },
+        { "name": "podcast-single-content", "title": "Podcast detail inhoud", "area": "uncategorized" },
+        { "name": "news-archive-content", "title": "Nieuws archief inhoud", "area": "uncategorized" },
+        { "name": "video-archive-content", "title": "Video archief inhoud", "area": "uncategorized" },
+        { "name": "events-archive-content", "title": "Agenda archief inhoud", "area": "uncategorized" },
+        { "name": "frequency-page-content", "title": "Frequenties inhoud", "area": "uncategorized" },
+        { "name": "contact-page-content", "title": "Contact inhoud", "area": "uncategorized" },
+        { "name": "about-page-content", "title": "Over ons inhoud", "area": "uncategorized" },
+        { "name": "legal-page-content", "title": "Juridische pagina inhoud", "area": "uncategorized" },
+        { "name": "newsletter-page-content", "title": "Nieuwsbrief inhoud", "area": "uncategorized" },
+        { "name": "page-content", "title": "Standaard pagina inhoud", "area": "uncategorized" },
+        { "name": "single-content", "title": "Standaard artikel inhoud", "area": "uncategorized" },
+        { "name": "archive-content", "title": "Standaard archief inhoud", "area": "uncategorized" },
+        { "name": "search-content", "title": "Zoekresultaten inhoud", "area": "uncategorized" },
+        { "name": "index-content", "title": "Index inhoud", "area": "uncategorized" },
+        { "name": "not-found-content", "title": "404 inhoud", "area": "uncategorized" }
     ]
 }

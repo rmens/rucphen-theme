@@ -78,15 +78,16 @@ radio-rucphen/
 ## Custom post types
 
 - `rucphen_program` - Programma's
-- `rucphen_slot` - Weekrooster (geen publieke single)
 - `rucphen_presenter` - DJ's / presentatoren
 - `rucphen_event` - Agenda
 
-Eigen nieuws gebruikt het native `post` post type. Externe Zuidwest Update items worden niet als posts opgeslagen, maar in een theme-cache via options.
+Eigen nieuws kan het native `post` post type gebruiken, maar het lokale nieuwsblok toont uitsluitend de zes nieuwste Zuidwest Update items uit de theme-cache. Externe Zuidwest Update items worden niet als posts opgeslagen.
 
 ## Now-playing
 
-Het theme verwacht een `zwfm-metadata` WebSocket output op de URL die is ingesteld onder Radio Rucphen > Stream. Bij connectie wordt direct de huidige metadata gepushed en daarna alle updates. Reconnect gaat met exponential backoff.
+Het theme gebruikt standaard `wss://metadata-rucphen.zuidwest.cloud/ws/metadata` als `zwfm-metadata` WebSocket. De URL is te beheren onder Radio Rucphen > Stream. Bij connectie wordt direct de huidige metadata gepushed en daarna alle updates. Reconnect gaat met exponential backoff.
+
+Artwork komt via `GET /wp-json/radio-rucphen/v1/now-playing-artwork`. De lookup zoekt eerst track artwork via iTunes Search API en valt daarna terug op artist/catalog artwork. Resultaten worden met transients gecached zodat de player niet bij elke metadata-update opnieuw iTunes raakt.
 
 ## Yoast SEO
 
@@ -98,4 +99,4 @@ Het theme verwacht een `zwfm-metadata` WebSocket output op de URL die is ingeste
 wp radio-rucphen import-static --source=/path/to/static-site
 ```
 
-Importeert programma's, rooster, presentatoren, events en nieuws uit de huidige static site (`data/*.json` + `content/**/*.md`).
+Importeert programma's met uitzendmomenten, presentatoren, events en nieuws uit de huidige static site (`data/*.json` + `content/**/*.md`).

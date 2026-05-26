@@ -57,6 +57,7 @@ done
 HOME_CONTENT='<!-- wp:rucphen/live-hero /-->
 <!-- wp:rucphen/featured-programs /-->
 <!-- wp:rucphen/news-mixed-grid /-->
+<!-- wp:rucphen/recent-podcasts /-->
 <!-- wp:rucphen/video-grid /-->
 <!-- wp:rucphen/whatsapp-cta /-->
 <!-- wp:rucphen/events-grid /-->
@@ -101,12 +102,24 @@ add_item() {
 
 create_menu "Primair" primary
 add_item "Primair" "Home" "/"
-add_item "Primair" "Programmagids" "/programma/"
-add_item "Primair" "DJ's" "/djs/"
-add_item "Primair" "Nieuws" "/nieuws/"
-add_item "Primair" "Agenda" "/agenda/"
-add_item "Primair" "Frequenties" "/frequenties/"
-add_item "Primair" "Contact" "/contact/"
+add_item "Primair" "Radio luisteren" "#radio-luisteren"
+add_item "Primair" "Gemist" "/podcasts/"
+add_item "Primair" "Acties" "/agenda/"
+
+create_menu "Radio luisteren" radio
+add_item "Radio luisteren" "Programmagids" "/programma/"
+add_item "Radio luisteren" "DJ's" "/djs/"
+add_item "Radio luisteren" "Frequenties" "/frequenties/"
+
+create_menu "Mobiel" mobile
+add_item "Mobiel" "Home" "/"
+add_item "Mobiel" "Programmagids" "/programma/"
+add_item "Mobiel" "DJ's" "/djs/"
+add_item "Mobiel" "Frequenties" "/frequenties/"
+add_item "Mobiel" "Gemist" "/podcasts/"
+add_item "Mobiel" "Acties en agenda" "/agenda/"
+add_item "Mobiel" "Nieuws" "/nieuws/"
+add_item "Mobiel" "Contact" "/contact/"
 
 create_menu "Footer luisteren" footer_listen
 add_item "Footer luisteren" "Programmagids" "/programma/"
@@ -121,6 +134,7 @@ add_item "Footer meedoen" "Over ons" "/over-ons/"
 create_menu "Footer nieuws" footer_news
 add_item "Footer nieuws" "Lokaal nieuws" "/nieuws/"
 add_item "Footer nieuws" "Video's" "/video/"
+add_item "Footer nieuws" "Podcast RSS" "/podcasts/rss.xml"
 
 create_menu "Footer juridisch" footer_legal
 add_item "Footer juridisch" "Privacy" "/privacy/"

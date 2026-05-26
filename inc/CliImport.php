@@ -26,7 +26,7 @@ final class CliImport {
 	}
 
 	/**
-	 * Importeer programma's, rooster, presentatoren, events en nieuws uit de
+	 * Importeer programma's met uitzendmomenten, presentatoren, events en nieuws uit de
 	 * huidige static site naar WordPress posts.
 	 *
 	 * ## OPTIONS
@@ -59,6 +59,9 @@ final class CliImport {
 		$schedule_path = $source . '/data/schedule.json';
 		$djs_path      = $source . '/data/djs.json';
 		$events_path   = $source . '/data/events.json';
+		$podcasts_path = $source . '/data/podcasts.json';
+		$zwu_news_path = $source . '/data/external-news.json';
+		$zwu_video_path = $source . '/data/external-videos.json';
 		$nieuws_dir    = $source . '/content/nieuws';
 		$djs_content   = $source . '/content/djs';
 
@@ -66,11 +69,18 @@ final class CliImport {
 		$schedule = self::read_json( $schedule_path );
 		$djs      = self::read_json( $djs_path );
 		$events   = self::read_json( $events_path );
+		$podcasts = self::read_json( $podcasts_path );
+		$zwu_news = self::read_json( $zwu_news_path );
+		$zwu_videos = self::read_json( $zwu_video_path );
 
 		\WP_CLI::log( 'Start import...' );
 
 		if ( $config !== null ) {
 			self::import_config( $config, $dry_run );
+		}
+
+		if ( is_array( $zwu_news ) || is_array( $zwu_videos ) ) {
+			self::import_zuidwest_caches( is_array( $zwu_news ) ? $zwu_news : [], is_array( $zwu_videos ) ? $zwu_videos : [], $dry_run );
 		}
 
 		$presenter_map = [];
@@ -84,11 +94,15 @@ final class CliImport {
 		}
 
 		if ( is_array( $schedule['weekly'] ?? null ) ) {
-			self::import_slots( (array) $schedule['weekly'], $program_map, $presenter_map, $dry_run );
+			self::import_program_airtimes( (array) $schedule['weekly'], $program_map, $presenter_map, $dry_run );
 		}
 
 		if ( is_array( $events ) ) {
 			self::import_events( $events, $dry_run );
+		}
+
+		if ( is_array( $podcasts ) ) {
+			self::import_podcasts( $podcasts, $source, $program_map, $dry_run );
 		}
 
 		if ( is_dir( $nieuws_dir ) ) {
@@ -251,49 +265,58 @@ final class CliImport {
 	 * @param array<string, int> $program_map
 	 * @param array<string, int> $presenter_map
 	 */
-	private static function import_slots( array $weekly, array $program_map, array $presenter_map, bool $dry_run ): void {
+	private static function import_program_airtimes( array $weekly, array $program_map, array $presenter_map, bool $dry_run ): void {
 		$count = 0;
+		$airtimes_by_program = [];
+		$presenters_by_program = [];
+
 		foreach ( $weekly as $day => $slots ) {
 			if ( ! is_array( $slots ) ) {
 				continue;
 			}
-			foreach ( $slots as $i => $slot ) {
+			foreach ( $slots as $slot ) {
 				if ( ! is_array( $slot ) ) {
 					continue;
 				}
-				$slug = sanitize_title( $day . '-' . ( $slot['from'] ?? '' ) . '-' . ( $slot['program_slug'] ?? $i ) );
 
 				if ( $dry_run ) {
-					\WP_CLI::log( '  [dry] slot: ' . $slug );
+					\WP_CLI::log( '  [dry] uitzendmoment: ' . (string) $day . ' ' . (string) ( $slot['from'] ?? '' ) . '-' . (string) ( $slot['to'] ?? '' ) . ' ' . (string) ( $slot['program_slug'] ?? '' ) );
 					continue;
 				}
 
 				$program_id = $program_map[ (string) ( $slot['program_slug'] ?? '' ) ] ?? 0;
-				$post_id    = self::upsert_by_slug( PostTypes::SLOT, $slug, [
-					'post_title'  => sprintf( '%s %s-%s', ucfirst( (string) $day ), (string) ( $slot['from'] ?? '' ), (string) ( $slot['to'] ?? '' ) ),
-					'post_status' => 'publish',
-				] );
-
-				if ( $post_id > 0 ) {
-					update_post_meta( $post_id, '_rucphen_slot_day', (string) $day );
-					update_post_meta( $post_id, '_rucphen_slot_start', (string) ( $slot['from'] ?? '' ) );
-					update_post_meta( $post_id, '_rucphen_slot_end', (string) ( $slot['to'] ?? '' ) );
-					update_post_meta( $post_id, '_rucphen_slot_program_id', (int) $program_id );
-
-					$ids = [];
-					foreach ( (array) ( $slot['dj_slugs'] ?? [] ) as $s ) {
-						$pid = $presenter_map[ (string) $s ] ?? 0;
-						if ( $pid > 0 ) {
-							$ids[] = $pid;
-						}
-					}
-					update_post_meta( $post_id, '_rucphen_slot_presenter_ids', $ids );
-					$count++;
+				if ( $program_id <= 0 ) {
+					continue;
 				}
+
+				$airtimes_by_program[ $program_id ][] = [
+					'day'   => sanitize_key( (string) $day ),
+					'start' => (string) ( $slot['from'] ?? '' ),
+					'end'   => (string) ( $slot['to'] ?? '' ),
+				];
+
+				foreach ( (array) ( $slot['dj_slugs'] ?? [] ) as $s ) {
+					$pid = $presenter_map[ (string) $s ] ?? 0;
+					if ( $pid > 0 ) {
+						$presenters_by_program[ $program_id ][ $pid ] = $pid;
+					}
+				}
+				$count++;
 			}
 		}
 
-		\WP_CLI::log( '  slots: ' . $count );
+		foreach ( $airtimes_by_program as $program_id => $airtimes ) {
+			$airtimes = Meta::sanitize_airtimes( $airtimes );
+			update_post_meta( (int) $program_id, '_rucphen_program_airtimes', $airtimes );
+			update_post_meta( (int) $program_id, '_rucphen_program_presenter_ids', array_values( $presenters_by_program[ $program_id ] ?? [] ) );
+
+			if ( $airtimes !== [] ) {
+				update_post_meta( (int) $program_id, '_rucphen_program_default_start', $airtimes[0]['start'] );
+				update_post_meta( (int) $program_id, '_rucphen_program_default_end', $airtimes[0]['end'] );
+			}
+		}
+
+		\WP_CLI::log( '  uitzendmomenten: ' . $count );
 	}
 
 	/**
@@ -334,6 +357,115 @@ final class CliImport {
 		\WP_CLI::log( '  events: ' . $count );
 	}
 
+	/**
+	 * @param array<int, array<string, mixed>> $podcasts
+	 * @param array<string, int> $program_map
+	 */
+	private static function import_podcasts( array $podcasts, string $source, array $program_map, bool $dry_run ): void {
+		$count = 0;
+		foreach ( $podcasts as $podcast ) {
+			if ( ! is_array( $podcast ) ) {
+				continue;
+			}
+
+			$slug = sanitize_title( (string) ( $podcast['slug'] ?? '' ) );
+			if ( $slug === '' ) {
+				continue;
+			}
+
+			$description_path = (string) ( $podcast['description_md'] ?? '' );
+			$body = '';
+			if ( $description_path !== '' ) {
+				$file = rtrim( $source, '/' ) . '/' . ltrim( $description_path, '/' );
+				if ( is_readable( $file ) ) {
+					$body = trim( (string) file_get_contents( $file ) );
+				}
+			}
+
+			$program_slug = sanitize_title( (string) ( $podcast['program_slug'] ?? '' ) );
+			$program_id   = $program_map[ $program_slug ] ?? 0;
+			$date         = (string) ( $podcast['date'] ?? '' );
+
+			if ( $dry_run ) {
+				\WP_CLI::log( '  [dry] podcast: ' . $slug );
+				continue;
+			}
+
+			$postarr = [
+				'post_title'   => (string) ( $podcast['title'] ?? $slug ),
+				'post_content' => $body,
+				'post_excerpt' => wp_trim_words( wp_strip_all_tags( $body ), 28, '...' ),
+				'post_status'  => 'publish',
+			];
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+				$postarr['post_date'] = $date . ' 12:00:00';
+			}
+
+			$post_id = self::upsert_by_slug( PostTypes::PODCAST, $slug, $postarr );
+			if ( $post_id > 0 ) {
+				update_post_meta( $post_id, '_rucphen_podcast_program_slug', $program_slug );
+				update_post_meta( $post_id, '_rucphen_podcast_program_id', (int) $program_id );
+				update_post_meta( $post_id, '_rucphen_podcast_date', $date );
+				update_post_meta( $post_id, '_rucphen_podcast_duration_seconds', (int) ( $podcast['duration_seconds'] ?? 0 ) );
+				update_post_meta( $post_id, '_rucphen_podcast_audio_url', self::static_source_url( $source, (string) ( $podcast['audio_url'] ?? '' ) ) );
+				update_post_meta( $post_id, '_rucphen_podcast_tracks', Meta::sanitize_podcast_tracks( $podcast['tracks'] ?? [] ) );
+				$count++;
+			}
+		}
+
+		\WP_CLI::log( '  podcasts: ' . $count );
+	}
+
+	/**
+	 * @param array<int, array<string, mixed>> $news
+	 * @param array<int, array<string, mixed>> $videos
+	 */
+	private static function import_zuidwest_caches( array $news, array $videos, bool $dry_run ): void {
+		if ( $dry_run ) {
+			\WP_CLI::log( '  [dry] Zuidwest cache: nieuws ' . count( $news ) . ', video ' . count( $videos ) );
+			return;
+		}
+
+		if ( $news !== [] ) {
+			update_option( ZuidwestImporter::OPTION_NEWS_CACHE, self::normalize_zuidwest_items( $news, 'standard' ), false );
+		}
+		if ( $videos !== [] ) {
+			update_option( ZuidwestImporter::OPTION_VIDEOS_CACHE, self::normalize_zuidwest_items( $videos, 'video' ), false );
+		}
+		update_option( ZuidwestImporter::OPTION_LAST_SUCCESS, gmdate( 'c' ), false );
+
+		\WP_CLI::log( '  Zuidwest cache: nieuws ' . count( $news ) . ', video ' . count( $videos ) );
+	}
+
+	/**
+	 * @param array<int, array<string, mixed>> $items
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function normalize_zuidwest_items( array $items, string $format ): array {
+		$normalized = [];
+		foreach ( $items as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$normalized[] = [
+				'source_id'       => (string) ( $item['source_id'] ?? $item['id'] ?? '' ),
+				'source_name'     => (string) ( $item['source_name'] ?? 'Zuidwest Update' ),
+				'source_url'      => (string) ( $item['source_url'] ?? '' ),
+				'published_at'    => (string) ( $item['published_at'] ?? '' ),
+				'title'           => (string) ( $item['title'] ?? '' ),
+				'excerpt'         => (string) ( $item['excerpt'] ?? '' ),
+				'image_url'       => (string) ( $item['image_url'] ?? '' ),
+				'format'          => (string) ( $item['format'] ?? $format ),
+				'video_embed_url' => $item['video_embed_url'] ?? null,
+				'region_slug'     => (string) ( $item['region_slug'] ?? '' ),
+				'region_label'    => (string) ( $item['region_label'] ?? $item['region_name'] ?? '' ),
+			];
+		}
+
+		return $normalized;
+	}
+
 	private static function import_news_posts( string $dir, bool $dry_run ): void {
 		$files = glob( $dir . '/*.md' );
 		if ( ! is_array( $files ) ) {
@@ -363,6 +495,7 @@ final class CliImport {
 
 			if ( $post_id > 0 ) {
 				update_post_meta( $post_id, '_rucphen_news_source', 'redactie' );
+				update_post_meta( $post_id, '_rucphen_news_cover', self::static_source_url( dirname( $dir, 2 ), (string) ( $front['cover'] ?? '' ) ) );
 				$count++;
 			}
 		}
@@ -393,6 +526,27 @@ final class CliImport {
 		}
 
 		return (int) wp_insert_post( $postarr );
+	}
+
+	private static function static_source_url( string $source, string $path ): string {
+		$path = trim( $path );
+		if ( $path === '' || ! str_starts_with( $path, '/' ) ) {
+			return $path;
+		}
+
+		$file = rtrim( $source, '/' ) . $path;
+		if ( ! is_readable( $file ) ) {
+			return $path;
+		}
+
+		$root = rtrim( wp_normalize_path( ABSPATH ), '/' );
+		$base = rtrim( wp_normalize_path( $source ), '/' );
+		if ( ! str_starts_with( $base, $root ) ) {
+			return $path;
+		}
+
+		$relative = '/' . ltrim( substr( $base, strlen( $root ) ), '/' );
+		return home_url( trailingslashit( $relative ) . ltrim( $path, '/' ) );
 	}
 
 	private static function strip_frontmatter( string $body ): string {

@@ -3,7 +3,7 @@
  *
  * - Sticky audio player met Media Session, volume in localStorage.
  * - zwfm-metadata WebSocket connectie met exponential backoff reconnect.
- * - Schedule day-tabs.
+ * - Program guide day-tabs and podcast filters.
  * - Search overlay (debounced REST fetch).
  * - Mobile menu toggle.
  */
@@ -22,18 +22,87 @@
 	audio.volume = Number.isFinite(storedVolume) ? Math.max(0, Math.min(1, storedVolume)) : 0.8;
 
 	let lastMessageAt = 0;
+	let artworkToken = 0;
+	let defaultArtworkUrl = '';
+	const artworkCache = new Map();
 
-	function setMediaSession(title, artist) {
+	function defaultCoverUrl() {
+		if (defaultArtworkUrl) return defaultArtworkUrl;
+		const cover = document.querySelector('[data-player-cover], [data-hero-cover]');
+		defaultArtworkUrl = cover ? cover.getAttribute('src') : '';
+		return defaultArtworkUrl;
+	}
+
+	function setCover(url, title, artist) {
+		const fallback = defaultCoverUrl();
+		const coverUrl = url || fallback;
+		const alt = url ? (artist ? title + ' - ' + artist : title) : '';
+
+		document.querySelectorAll('[data-player-cover], [data-hero-cover]').forEach((el) => {
+			if (coverUrl) el.setAttribute('src', coverUrl);
+			el.setAttribute('alt', alt);
+		});
+	}
+
+	function setMediaSession(title, artist, artworkUrl) {
 		if (!('mediaSession' in navigator)) return;
 		try {
-			navigator.mediaSession.metadata = new MediaMetadata({
+			const metadata = {
 				title: title || station.name,
 				artist: artist || station.tagline,
 				album: station.name,
-			});
+			};
+			if (artworkUrl) {
+				metadata.artwork = [
+					{ src: artworkUrl, sizes: '600x600' },
+				];
+			}
+			navigator.mediaSession.metadata = new MediaMetadata(metadata);
 			navigator.mediaSession.setActionHandler('play', () => audio.play());
 			navigator.mediaSession.setActionHandler('pause', () => audio.pause());
 		} catch (_) { /* ignore */ }
+	}
+
+	function lookupArtwork(meta, title, artist) {
+		if (!stream.coverLookupEnabled) {
+			setCover('', title, artist);
+			setMediaSession(title, artist);
+			return;
+		}
+
+		const key = [artist || '', title || '', meta.formatted_metadata || ''].join('\u0001');
+		const cached = artworkCache.get(key);
+		const token = ++artworkToken;
+
+		if (cached !== undefined) {
+			const artworkUrl = cached && cached.found ? cached.artworkUrl : '';
+			setCover(artworkUrl, title, artist);
+			setMediaSession(title, artist, artworkUrl);
+			return;
+		}
+
+		const restRoot = boot.restRoot || '/wp-json/radio-rucphen/v1/';
+		const params = new URLSearchParams({
+			title: title || '',
+			artist: artist || '',
+			formatted: meta.formatted_metadata || '',
+		});
+
+		fetch(restRoot + 'now-playing-artwork?' + params.toString(), { credentials: 'same-origin' })
+			.then((res) => (res.ok ? res.json() : null))
+			.then((data) => {
+				if (token !== artworkToken) return;
+				artworkCache.set(key, data || { found: false });
+				const artworkUrl = data && data.found ? data.artworkUrl : '';
+				setCover(artworkUrl, title, artist);
+				setMediaSession(title, artist, artworkUrl);
+			})
+			.catch(() => {
+				if (token !== artworkToken) return;
+				artworkCache.set(key, { found: false });
+				setCover('', title, artist);
+				setMediaSession(title, artist);
+			});
 	}
 
 	function applyMeta(meta) {
@@ -49,13 +118,16 @@
 			el.textContent = artist ? title + ' - ' + artist : title;
 		});
 
-		setMediaSession(title, artist);
+		lookupArtwork(meta, title, artist);
 	}
 
 	function showFallback() {
 		document.querySelectorAll('[data-player-title]').forEach((el) => { el.textContent = station.name + ' - Live'; });
 		document.querySelectorAll('[data-player-artist]').forEach((el) => { el.textContent = station.tagline || ''; });
 		document.querySelectorAll('[data-hero-artist]').forEach((el) => { el.textContent = station.tagline || ''; });
+		artworkToken++;
+		setCover('', station.name + ' - Live', station.tagline || '');
+		setMediaSession(station.name + ' - Live', station.tagline || '');
 	}
 
 	function connectWebSocket() {
@@ -128,18 +200,11 @@
 				localStorage.setItem('rucphen.volume', String(v));
 			});
 		}
-	}
 
-	function bindSchedule() {
-		const root = document.querySelector('[data-component="schedule"]');
-		if (!root) return;
-		root.querySelectorAll('[data-day]').forEach((btn) => {
-			btn.addEventListener('click', () => {
-				const day = btn.getAttribute('data-day');
-				root.querySelectorAll('[data-day]').forEach((b) => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
-				root.querySelectorAll('[data-day-panel]').forEach((panel) => {
-					panel.hidden = panel.getAttribute('data-day-panel') !== day;
-				});
+		document.querySelectorAll('[data-podcast-audio]').forEach((podcastAudio) => {
+			podcastAudio.addEventListener('play', () => {
+				audio.pause();
+				setPlaying(false);
 			});
 		});
 	}
@@ -152,6 +217,116 @@
 			const open = panel.hidden;
 			panel.hidden = !open;
 			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+	}
+
+	function bindProgramGuide() {
+		const root = document.querySelector('[data-component="program-guide"]');
+		if (!root) return;
+		const dayIndex = {
+			monday: 1,
+			tuesday: 2,
+			wednesday: 3,
+			thursday: 4,
+			friday: 5,
+			saturday: 6,
+			sunday: 7
+		};
+		const toMinutes = (time) => {
+			const match = /^(\d{1,2}):([0-5]\d)$/.exec(String(time || '').trim());
+			if (!match) return -1;
+			return Number(match[1]) * 60 + Number(match[2]);
+		};
+		const isLiveRow = (row, now = new Date()) => {
+			const rowDay = dayIndex[row.getAttribute('data-day') || ''];
+			const start = toMinutes(row.getAttribute('data-from'));
+			const end = toMinutes(row.getAttribute('data-to'));
+			if (!rowDay || start < 0 || end < 0) return false;
+
+			const today = now.getDay() === 0 ? 7 : now.getDay();
+			const minutes = now.getHours() * 60 + now.getMinutes();
+			if (end <= start) {
+				const nextDay = rowDay === 7 ? 1 : rowDay + 1;
+				return (today === rowDay && minutes >= start) || (today === nextDay && minutes < end);
+			}
+			return today === rowDay && minutes >= start && minutes < end;
+		};
+		const updateLiveBadges = () => {
+			root.querySelectorAll('[data-guide-row]').forEach((row) => {
+				const badge = row.querySelector('[data-live-badge]');
+				if (badge) badge.classList.toggle('hidden', !isLiveRow(row));
+			});
+		};
+
+		root.querySelectorAll('[data-day]').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const day = btn.getAttribute('data-day');
+				root.querySelectorAll('[data-day]').forEach((b) => {
+					const active = b === btn ? 'true' : 'false';
+					b.setAttribute('aria-selected', active);
+					b.setAttribute('aria-pressed', active);
+				});
+				root.querySelectorAll('[data-day-panel]').forEach((panel) => {
+					panel.hidden = panel.getAttribute('data-day-panel') !== day;
+				});
+			});
+		});
+
+		updateLiveBadges();
+		window.setInterval(updateLiveBadges, 60 * 1000);
+	}
+
+	function bindPodcastArchive() {
+		const root = document.querySelector('[data-component="podcast-archive"]');
+		if (!root) return;
+
+		root.querySelectorAll('[data-podcast-filter]').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const selected = btn.getAttribute('data-podcast-filter') || 'all';
+				root.querySelectorAll('[data-podcast-filter]').forEach((filter) => {
+					filter.setAttribute('aria-pressed', filter === btn ? 'true' : 'false');
+				});
+				root.querySelectorAll('[data-podcast-card]').forEach((card) => {
+					const program = card.getAttribute('data-podcast-program') || '';
+					card.hidden = selected !== 'all' && program !== selected;
+				});
+			});
+		});
+	}
+
+	function bindNewsArchive() {
+		const root = document.querySelector('[data-component="news-archive"]');
+		if (!root) return;
+
+		root.querySelectorAll('[data-news-filter]').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const selected = btn.getAttribute('data-news-filter') || 'all';
+				root.querySelectorAll('[data-news-filter]').forEach((filter) => {
+					filter.setAttribute('aria-pressed', filter === btn ? 'true' : 'false');
+				});
+				root.querySelectorAll('[data-news-card]').forEach((card) => {
+					const source = card.getAttribute('data-news-source') || '';
+					card.hidden = selected !== 'all' && source !== selected;
+				});
+			});
+		});
+	}
+
+	function bindEventsArchive() {
+		const root = document.querySelector('[data-component="events-archive"]');
+		if (!root) return;
+
+		root.querySelectorAll('[data-event-filter]').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const selected = btn.getAttribute('data-event-filter') || 'all';
+				root.querySelectorAll('[data-event-filter]').forEach((filter) => {
+					filter.setAttribute('aria-pressed', filter === btn ? 'true' : 'false');
+				});
+				root.querySelectorAll('[data-event-card]').forEach((card) => {
+					const month = card.getAttribute('data-event-month') || '';
+					card.hidden = selected !== 'all' && month !== selected;
+				});
+			});
 		});
 	}
 
@@ -209,8 +384,11 @@
 
 	function init() {
 		bindPlayer();
-		bindSchedule();
 		bindMobileMenu();
+		bindProgramGuide();
+		bindPodcastArchive();
+		bindNewsArchive();
+		bindEventsArchive();
 		bindSearch();
 		connectWebSocket();
 		staleWatcher();

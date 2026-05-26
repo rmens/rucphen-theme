@@ -55,7 +55,7 @@ final class RestSearch {
 		$query = new \WP_Query(
 			[
 				's'                   => $q,
-				'post_type'           => [ 'post', PostTypes::PROGRAM, PostTypes::PRESENTER, PostTypes::EVENT, 'page' ],
+				'post_type'           => [ 'post', PostTypes::PROGRAM, PostTypes::PRESENTER, PostTypes::PODCAST, PostTypes::EVENT, 'page' ],
 				'post_status'         => 'publish',
 				'posts_per_page'      => $limit,
 				'no_found_rows'       => true,

@@ -56,6 +56,7 @@ final class Setup {
 			[
 				'primary'             => __( 'Primair menu', 'radio-rucphen' ),
 				'radio'               => __( 'Radio (header secundair)', 'radio-rucphen' ),
+				'mobile'              => __( 'Mobiel menu', 'radio-rucphen' ),
 				'footer_listen'       => __( 'Footer - Luisteren', 'radio-rucphen' ),
 				'footer_participate'  => __( 'Footer - Meedoen', 'radio-rucphen' ),
 				'footer_news'         => __( 'Footer - Nieuws', 'radio-rucphen' ),

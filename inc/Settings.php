@@ -23,6 +23,7 @@ final class Settings {
 	public const OPTION_ZWU           = 'rucphen_zwu';
 
 	public const MENU_SLUG = 'radio-rucphen-settings';
+	public const DEFAULT_METADATA_WEBSOCKET_URL = 'wss://metadata-rucphen.zuidwest.cloud/ws/metadata';
 
 	public static function register(): void {
 		add_action( 'admin_menu', [ self::class, 'register_menu' ] );
@@ -42,7 +43,7 @@ final class Settings {
 			self::OPTION_STREAM => [
 				'stream_url'                       => 'https://icecast.zuidwest.cloud/radiorucphen.mp3',
 				'metadata_provider'                => 'zwfm-metadata',
-				'metadata_websocket_url'           => '',
+				'metadata_websocket_url'           => self::DEFAULT_METADATA_WEBSOCKET_URL,
 				'metadata_http_fallback_url'       => '',
 				'metadata_stale_after_seconds'     => 60,
 				'metadata_reconnect_min_seconds'   => 2,
@@ -100,7 +101,13 @@ final class Settings {
 		if ( ! is_array( $value ) ) {
 			return $default;
 		}
-		return array_merge( $default, $value );
+
+		$value = array_merge( $default, $value );
+		if ( $option === self::OPTION_STREAM && trim( (string) ( $value['metadata_websocket_url'] ?? '' ) ) === '' ) {
+			$value['metadata_websocket_url'] = $default['metadata_websocket_url'];
+		}
+
+		return $value;
 	}
 
 	public static function register_menu(): void {
@@ -215,7 +222,7 @@ final class Settings {
 					</tr>
 					<tr>
 						<th><label for="rucphen_meta_ws"><?php esc_html_e( 'zwfm-metadata WebSocket URL', 'radio-rucphen' ); ?></label></th>
-						<td><input type="url" name="<?php echo esc_attr( self::OPTION_STREAM ); ?>[metadata_websocket_url]" id="rucphen_meta_ws" value="<?php echo esc_attr( $stream['metadata_websocket_url'] ); ?>" class="regular-text code" placeholder="wss://metadata.example.nl/metadata"></td>
+						<td><input type="url" name="<?php echo esc_attr( self::OPTION_STREAM ); ?>[metadata_websocket_url]" id="rucphen_meta_ws" value="<?php echo esc_attr( $stream['metadata_websocket_url'] ); ?>" class="regular-text code" placeholder="<?php echo esc_attr( self::DEFAULT_METADATA_WEBSOCKET_URL ); ?>"></td>
 					</tr>
 					<tr>
 						<th><label for="rucphen_meta_http"><?php esc_html_e( 'HTTP fallback (optioneel)', 'radio-rucphen' ); ?></label></th>
