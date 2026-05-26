@@ -8,7 +8,44 @@ Block theme voor Radio Rucphen. Inclusief CPT's, settings, Zuidwest Update impor
 2. Activeer het theme via Weergave > Thema's.
 3. Optioneel: voer `npm install` uit en draai `npm run build` om Tailwind CSS en JS te compileren naar `assets/`.
 
-## Ontwikkeling
+## Lokale development met Docker
+
+Een complete WordPress stack staat klaar via Docker Compose. Vereist Docker Desktop op Mac/Windows of Docker Engine op Linux.
+
+```bash
+docker compose up -d
+```
+
+De eerste keer bouwt de WordPress image (Apache + PHP 8.3, WP-CLI, Node) en wacht hij op MariaDB. Het entrypoint installeert daarna automatisch:
+
+- WordPress 6.9.4 op `http://localhost:8080` (taal `nl_NL`, permalinks `/%postname%/`)
+- admin gebruiker `admin` / wachtwoord `admin`
+- het `radio-rucphen` theme als actief
+- Tailwind 4.x build via `npm install` + `npm run build:css`
+
+phpMyAdmin draait op `http://localhost:8081` (login wordpress / wordpress).
+
+Stoppen of resetten:
+
+```bash
+docker compose down            # behoud volumes
+docker compose down -v         # wis WP + database volumes
+```
+
+### Static content importeren
+
+Mount de huidige static site als read-only volume en draai het WP-CLI commando:
+
+```bash
+docker run --rm -v /pad/naar/static-site:/var/www/html/static-source:ro \
+  --network host rucphen-wp \
+  wp radio-rucphen import-static --source=/var/www/html/static-source --allow-root
+```
+
+Of voeg een tweede bind-mount toe in `docker-compose.yml` onder de `wordpress` service:
+`./static-source:/var/www/html/static-source:ro` (de entrypoint detecteert die automatisch tijdens de eerste install).
+
+## Ontwikkeling zonder Docker
 
 ```bash
 npm install
