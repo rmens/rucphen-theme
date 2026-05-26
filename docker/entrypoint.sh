@@ -52,10 +52,10 @@ ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
         # Stel een paar zinvolle defaults in op de Radio Rucphen options
         wp option update blogdescription "Het geluid van Rucphen" --allow-root || true
 
-        # Optioneel: import static-source als de map gemount is
-        if [ -d "/var/www/html/static-source/data" ]; then
-            echo "[entrypoint] Static content importeren..."
-            wp radio-rucphen import-static --source=/var/www/html/static-source --allow-root || echo "[entrypoint] import-static faalde"
+        # Demo content + pagina's + menu's seeden (idempotent).
+        if [ -x "${THEME_DIR}/docker/seed-content.sh" ]; then
+            echo "[entrypoint] Seed content draaien..."
+            "${THEME_DIR}/docker/seed-content.sh" || echo "[entrypoint] seed faalde"
         fi
 
         echo "[entrypoint] Klaar! Open ${SITE_URL}/wp-admin (admin / admin)."
