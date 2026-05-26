@@ -5,6 +5,7 @@
  * - zwfm-metadata WebSocket connectie met exponential backoff reconnect.
  * - Schedule day-tabs.
  * - Search overlay (debounced REST fetch).
+ * - Mobile menu toggle.
  */
 
 (function () {
@@ -20,7 +21,6 @@
 	const storedVolume = parseFloat(localStorage.getItem('rucphen.volume'));
 	audio.volume = Number.isFinite(storedVolume) ? Math.max(0, Math.min(1, storedVolume)) : 0.8;
 
-	let currentMeta = null;
 	let lastMessageAt = 0;
 
 	function setMediaSession(title, artist) {
@@ -37,38 +37,30 @@
 	}
 
 	function applyMeta(meta) {
-		currentMeta = meta;
 		lastMessageAt = Date.now();
-
 		const title = meta.title || meta.formatted_metadata || station.name;
 		const artist = meta.artist || '';
 
-		const playerTitle = document.querySelector('[data-player-title]');
-		const playerArtist = document.querySelector('[data-player-artist]');
-		const heroNow = document.querySelector('[data-hero-now]');
-
-		if (playerTitle) playerTitle.textContent = title;
-		if (playerArtist) playerArtist.textContent = artist;
-		if (heroNow) heroNow.textContent = artist ? title + ' - ' + artist : title;
+		document.querySelectorAll('[data-player-title]').forEach((el) => { el.textContent = title; });
+		document.querySelectorAll('[data-player-artist]').forEach((el) => { el.textContent = artist; });
+		document.querySelectorAll('[data-hero-title]').forEach((el) => { el.textContent = title; });
+		document.querySelectorAll('[data-hero-artist]').forEach((el) => { el.textContent = artist; });
+		document.querySelectorAll('[data-live-now]').forEach((el) => {
+			el.textContent = artist ? title + ' - ' + artist : title;
+		});
 
 		setMediaSession(title, artist);
 	}
 
 	function showFallback() {
-		const playerTitle = document.querySelector('[data-player-title]');
-		const playerArtist = document.querySelector('[data-player-artist]');
-		const heroNow = document.querySelector('[data-hero-now]');
-		if (playerTitle) playerTitle.textContent = station.name;
-		if (playerArtist) playerArtist.textContent = station.tagline || '';
-		if (heroNow) heroNow.textContent = station.tagline || '';
+		document.querySelectorAll('[data-player-title]').forEach((el) => { el.textContent = station.name + ' - Live'; });
+		document.querySelectorAll('[data-player-artist]').forEach((el) => { el.textContent = station.tagline || ''; });
+		document.querySelectorAll('[data-hero-artist]').forEach((el) => { el.textContent = station.tagline || ''; });
 	}
 
 	function connectWebSocket() {
 		const url = stream.metadataWebsocketUrl;
-		if (!url) {
-			showFallback();
-			return;
-		}
+		if (!url) { showFallback(); return; }
 
 		let attempts = 0;
 		const minDelay = (stream.metadataReconnectMinSeconds || 2) * 1000;
@@ -76,21 +68,13 @@
 
 		function open() {
 			let ws;
-			try {
-				ws = new WebSocket(url);
-			} catch (e) {
-				schedule();
-				return;
-			}
-
+			try { ws = new WebSocket(url); } catch (e) { schedule(); return; }
 			ws.addEventListener('open', () => { attempts = 0; });
 			ws.addEventListener('message', (evt) => {
 				try {
 					const payload = JSON.parse(evt.data);
-					if (payload && typeof payload === 'object') {
-						applyMeta(payload);
-					}
-				} catch (_) { /* invalid payload, ignore */ }
+					if (payload && typeof payload === 'object') applyMeta(payload);
+				} catch (_) {}
 			});
 			ws.addEventListener('close', schedule);
 			ws.addEventListener('error', () => { try { ws.close(); } catch (_) {} });
@@ -109,39 +93,33 @@
 		const staleAfter = (stream.metadataStaleAfterSeconds || 60) * 1000;
 		setInterval(() => {
 			if (!lastMessageAt) return;
-			if (Date.now() - lastMessageAt > staleAfter) {
-				showFallback();
-			}
+			if (Date.now() - lastMessageAt > staleAfter) showFallback();
 		}, 5000);
 	}
 
 	function bindPlayer() {
 		const player = document.querySelector('[data-component="sticky-player"]');
-		const toggle = document.querySelector('[data-player-toggle]');
+		const toggles = document.querySelectorAll('[data-player-toggle], [data-hero-play]');
 		const volume = document.querySelector('[data-player-volume]');
-		const heroPlay = document.querySelector('[data-hero-play]');
+		const playIcon = document.querySelector('[data-player-icon-play]');
+		const pauseIcon = document.querySelector('[data-player-icon-pause]');
 
-		if (player) player.hidden = false;
-
-		function play() {
-			audio.play().then(() => {
-				if (player) player.classList.add('is-playing');
-			}).catch(() => { /* autoplay blocked */ });
+		function setPlaying(on) {
+			if (player) player.classList.toggle('is-playing', on);
+			if (playIcon) playIcon.hidden = on;
+			if (pauseIcon) pauseIcon.hidden = !on;
 		}
 
-		function pause() {
-			audio.pause();
-			if (player) player.classList.remove('is-playing');
-		}
+		function play() { audio.play().then(() => setPlaying(true)).catch(() => {}); }
+		function pause() { audio.pause(); setPlaying(false); }
 
-		if (toggle) {
-			toggle.addEventListener('click', () => {
+		toggles.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (btn.dataset.heroPlay !== undefined) { play(); return; }
 				if (audio.paused) play(); else pause();
 			});
-		}
-		if (heroPlay) {
-			heroPlay.addEventListener('click', play);
-		}
+		});
+
 		if (volume) {
 			volume.value = String(Math.round(audio.volume * 100));
 			volume.addEventListener('input', () => {
@@ -166,27 +144,39 @@
 		});
 	}
 
+	function bindMobileMenu() {
+		const toggle = document.querySelector('[data-mobile-toggle]');
+		const panel = document.querySelector('[data-mobile-panel]');
+		if (!toggle || !panel) return;
+		toggle.addEventListener('click', () => {
+			const open = panel.hidden;
+			panel.hidden = !open;
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+	}
+
 	function bindSearch() {
 		const overlay = document.getElementById('rucphen-search-overlay');
-		if (!overlay) return;
-
-		const input = overlay.querySelector('[data-search-input]');
-		const results = overlay.querySelector('[data-search-results]');
-		const closeBtn = overlay.querySelector('[data-search-close]');
+		const input = overlay && overlay.querySelector('[data-search-input]');
+		const results = overlay && overlay.querySelector('[data-search-results]');
 
 		document.querySelectorAll('[data-search-open]').forEach((btn) => {
 			btn.addEventListener('click', () => {
+				if (!overlay) return;
 				if (typeof overlay.showModal === 'function') overlay.showModal();
 				else overlay.setAttribute('open', '');
 				if (input) input.focus();
 			});
 		});
 
-		if (closeBtn) {
-			closeBtn.addEventListener('click', () => {
-				if (typeof overlay.close === 'function') overlay.close();
-				else overlay.removeAttribute('open');
-			});
+		if (overlay) {
+			const closeBtn = overlay.querySelector('[data-search-close]');
+			if (closeBtn) {
+				closeBtn.addEventListener('click', () => {
+					if (typeof overlay.close === 'function') overlay.close();
+					else overlay.removeAttribute('open');
+				});
+			}
 		}
 
 		let timer;
@@ -201,12 +191,13 @@
 						const res = await fetch(url, { credentials: 'same-origin' });
 						const data = await res.json();
 						results.innerHTML = (data.results || []).map((item) => (
-							'<a href="' + item.url + '" class="rucphen-search-result">' +
+							'<a href="' + item.url + '" class="search-result">' +
 								'<strong>' + escapeHtml(item.title) + '</strong>' +
-								(item.excerpt ? '<p>' + escapeHtml(item.excerpt) + '</p>' : '') +
+								'<span class="meta">' + escapeHtml(item.type) + '</span>' +
+								(item.excerpt ? '<span>' + escapeHtml(item.excerpt) + '</span>' : '') +
 							'</a>'
 						)).join('');
-					} catch (_) { results.innerHTML = '<p>Zoeken mislukte.</p>'; }
+					} catch (_) { results.innerHTML = '<p class="meta">Zoeken mislukte.</p>'; }
 				}, 250);
 			});
 		}
@@ -219,6 +210,7 @@
 	function init() {
 		bindPlayer();
 		bindSchedule();
+		bindMobileMenu();
 		bindSearch();
 		connectWebSocket();
 		staleWatcher();

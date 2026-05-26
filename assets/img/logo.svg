@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-labelledby="title desc">
+  <title id="title">Radio Rucphen</title>
+  <desc id="desc">Tijdelijk tekstlogo voor Radio Rucphen</desc>
+  <rect width="420" height="120" fill="#003576" rx="8"/>
+  <circle cx="62" cy="60" r="34" fill="none" stroke="#ffffff" stroke-width="8"/>
+  <path d="M49 78V42h18c11 0 18 6 18 16 0 7-4 12-10 14l13 6H70l-11-6h-2v6H49Zm8-14h10c6 0 10-2 10-7s-4-7-10-7H57v14Z" fill="#ffffff"/>
+  <text x="116" y="54" fill="#ffffff" font-family="Inter, Helvetica, Arial, sans-serif" font-size="30" font-weight="800">RADIO</text>
+  <text x="116" y="87" fill="#ffffff" font-family="Inter, Helvetica, Arial, sans-serif" font-size="30" font-weight="800">RUCPHEN</text>
+</svg>
