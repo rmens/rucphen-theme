@@ -28,11 +28,19 @@ final class Assets {
 		$css_path = RUCPHEN_THEME_DIR . $css_rel;
 		$js_path  = RUCPHEN_THEME_DIR . $js_rel;
 
+		// Inter (sans) + Bricolage Grotesque (display) - identiek aan static site.
+		wp_enqueue_style(
+			'radio-rucphen-fonts',
+			'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800;12..96,900&family=Inter:wght@400;500;600;700;800;900&display=swap',
+			[],
+			null
+		);
+
 		if ( is_readable( $css_path ) ) {
 			wp_enqueue_style(
 				self::HANDLE_CSS,
 				RUCPHEN_THEME_URI . $css_rel,
-				[],
+				[ 'radio-rucphen-fonts' ],
 				(string) filemtime( $css_path )
 			);
 		}

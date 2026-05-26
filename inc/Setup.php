@@ -17,6 +17,12 @@ final class Setup {
 		add_action( 'after_setup_theme', [ self::class, 'theme_supports' ] );
 		add_action( 'after_setup_theme', [ self::class, 'register_menus' ] );
 		add_action( 'after_setup_theme', [ self::class, 'image_sizes' ] );
+		add_action( 'wp_head', [ self::class, 'preconnect_fonts' ], 2 );
+	}
+
+	public static function preconnect_fonts(): void {
+		echo "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n";
+		echo "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n";
 	}
 
 	public static function theme_supports(): void {

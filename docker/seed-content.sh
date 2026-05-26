@@ -29,12 +29,23 @@ declare -a PAGES=(
     "colofon:Colofon:"
 )
 
+page_content() {
+    case "$1" in
+        frequenties) echo '<!-- wp:rucphen/frequency-grid /-->' ;;
+        contact)     echo '<!-- wp:rucphen/whatsapp-cta /-->' ;;
+        nieuwsbrief) echo '<!-- wp:rucphen/newsletter-cta /-->' ;;
+        video)       echo '<!-- wp:rucphen/video-grid /-->' ;;
+        *)           echo '' ;;
+    esac
+}
+
 for entry in "${PAGES[@]}"; do
     IFS=':' read -r slug title tpl <<< "$entry"
     if $WP post list --post_type=page --name="$slug" --field=ID 2>/dev/null | grep -q '^[0-9]'; then
         continue
     fi
-    args=(--post_type=page --post_title="$title" --post_name="$slug" --post_status=publish)
+    content=$(page_content "$slug")
+    args=(--post_type=page --post_title="$title" --post_name="$slug" --post_status=publish --post_content="$content")
     if [ -n "$tpl" ]; then
         args+=(--meta_input="{\"_wp_page_template\":\"${tpl}\"}")
     fi
