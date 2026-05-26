@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./static-design.css";
 
 @source "../../templates/**/*.html";
 @source "../../parts/**/*.html";
@@ -8,12 +7,111 @@
 @source "../../*.php";
 @source "../js/**/*.js";
 
+/* Design tokens als Tailwind 4 theme-vars. Alle utilities (bg-brand,
+ * text-ink, font-display, rounded-card, etc.) komen hier vandaan. */
 @theme {
 	--color-brand: #003576;
 	--color-brand-dark: #00254f;
 	--color-accent: #ffde00;
 	--color-cyan: #00a7df;
 	--color-ink: #0f172a;
+	--color-ink-soft: #475569;
 	--color-surface: #f8fafc;
+	--color-bg-app: #f4f7fb;
+	--color-bg-warm: #fff7ed;
+	--color-bg-green: #f0fdf4;
+	--color-bg-dark: #0f172a;
+	--color-line: #e2e8f0;
+	--color-success: #16a34a;
+	--color-whatsapp: #25d366;
+
+	--font-sans: "Inter", "Helvetica Neue", Arial, sans-serif;
 	--font-display: "Bricolage Grotesque", "Inter", "Helvetica Neue", Arial, sans-serif;
+
+	--radius-sm: 6px;
+	--radius-card: 8px;
+
+	--shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+	--shadow-md: 0 8px 24px rgb(15 23 42 / 0.10);
+	--shadow-lg: 0 6px 20px rgb(15 23 42 / 0.16);
+
+	--spacing-container: 1200px;
+	--player-height: 88px;
+}
+
+/* Body baseline. Tailwind 4 reset doet @layer base maar zet body bg op
+ * transparant; we forceren de app-achtergrond en player padding. */
+@layer base {
+	html { color-scheme: light; }
+	body {
+		background: var(--color-bg-app);
+		color: var(--color-ink);
+		font-family: var(--font-sans);
+		font-size: 17px;
+		line-height: 1.6;
+		padding-bottom: calc(var(--player-height) + env(safe-area-inset-bottom));
+	}
+	[hidden] { display: none !important; }
+}
+
+/* Componenten waar utility-first niet praktisch is: keyframe animaties,
+ * before/after overlays met gradient en grid auto-fit met arbitrary
+ * track-template. Bewust beperkt. */
+@layer components {
+	.rucphen-container { width: min(100% - 2rem, var(--spacing-container)); margin-inline: auto; }
+
+	.rucphen-live-dot {
+		width: 0.55rem; height: 0.55rem; border-radius: 9999px;
+		background: var(--color-success);
+		box-shadow: 0 0 0 0 rgb(22 163 74 / 0.58);
+		animation: rucphen-pulse 1.8s infinite;
+	}
+	@keyframes rucphen-pulse {
+		70% { box-shadow: 0 0 0 8px rgb(22 163 74 / 0); }
+		100% { box-shadow: 0 0 0 0 rgb(22 163 74 / 0); }
+	}
+
+	/* Feature mosaic gebruikt een 12-koloms grid met large tile rechtsboven.
+	 * Tailwind arbitrary values lossen dit op maar als utility helper. */
+	.rucphen-mosaic {
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(12, minmax(0, 1fr));
+		grid-auto-rows: 200px;
+	}
+	.rucphen-mosaic > * { grid-column: span 6 / span 6; }
+	.rucphen-mosaic > .rucphen-mosaic-large { grid-column: span 12 / span 12; grid-row: span 2 / span 2; }
+	@media (min-width: 768px) {
+		.rucphen-mosaic > * { grid-column: span 4 / span 4; }
+		.rucphen-mosaic > .rucphen-mosaic-large { grid-column: span 12 / span 12; grid-row: auto; height: 360px; }
+	}
+
+	/* Hero met dynamische achtergrond via CSS-variabele. */
+	.rucphen-hero-bg {
+		background-image: linear-gradient(180deg, rgb(0 53 118 / 0.85) 0%, rgb(0 37 79 / 0.95) 100%), var(--hero-bg);
+		background-size: cover;
+		background-position: center;
+	}
+
+	/* News grid: 1 lead spanning 2 kolommen, rest single column. */
+	.rucphen-news-grid {
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+	}
+	@media (min-width: 768px) {
+		.rucphen-news-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+		.rucphen-news-grid > .rucphen-news-lead { grid-column: span 2 / span 2; grid-row: span 2 / span 2; }
+	}
+
+	/* Video grid: vergelijkbaar. */
+	.rucphen-video-grid {
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+	}
+	@media (min-width: 768px) {
+		.rucphen-video-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+		.rucphen-video-grid > .rucphen-video-large { grid-column: span 2 / span 2; grid-row: span 2 / span 2; }
+	}
 }

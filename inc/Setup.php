@@ -18,6 +18,20 @@ final class Setup {
 		add_action( 'after_setup_theme', [ self::class, 'register_menus' ] );
 		add_action( 'after_setup_theme', [ self::class, 'image_sizes' ] );
 		add_action( 'wp_head', [ self::class, 'preconnect_fonts' ], 2 );
+		add_filter( 'block_categories_all', [ self::class, 'register_block_category' ], 10, 1 );
+	}
+
+	/**
+	 * @param array<int, array<string, mixed>> $categories
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function register_block_category( array $categories ): array {
+		array_unshift( $categories, [
+			'slug'  => 'radio-rucphen',
+			'title' => __( 'Radio Rucphen', 'radio-rucphen' ),
+			'icon'  => 'microphone',
+		] );
+		return $categories;
 	}
 
 	public static function preconnect_fonts(): void {

@@ -54,11 +54,26 @@ for entry in "${PAGES[@]}"; do
 done
 
 # 3. Homepage page + Reading settings
+HOME_CONTENT='<!-- wp:rucphen/live-hero /-->
+<!-- wp:rucphen/featured-programs /-->
+<!-- wp:rucphen/news-mixed-grid /-->
+<!-- wp:rucphen/video-grid /-->
+<!-- wp:rucphen/whatsapp-cta /-->
+<!-- wp:rucphen/events-grid /-->
+<!-- wp:rucphen/program-quick-links /-->
+<!-- wp:rucphen/newsletter-cta /-->'
+
 if ! $WP post list --post_type=page --name=home --field=ID 2>/dev/null | grep -q '^[0-9]'; then
-    HOME_ID=$($WP post create --post_type=page --post_title="Home" --post_name="home" --post_status=publish --porcelain)
+    HOME_ID=$($WP post create --post_type=page --post_title="Home" --post_name="home" --post_status=publish --post_content="$HOME_CONTENT" --porcelain)
     echo "[seed] page: home -> $HOME_ID"
 else
     HOME_ID=$($WP post list --post_type=page --name=home --field=ID | head -1)
+    # Vul alleen als nog leeg, zodat editor-aanpassingen niet overschreven worden.
+    EXISTING=$($WP post get "$HOME_ID" --field=post_content)
+    if [ -z "$EXISTING" ]; then
+        $WP post update "$HOME_ID" --post_content="$HOME_CONTENT" >/dev/null
+        echo "[seed] home content gevuld"
+    fi
 fi
 
 NEWS_ID=$($WP post list --post_type=page --name=nieuws --field=ID | head -1)
