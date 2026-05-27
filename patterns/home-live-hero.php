@@ -4,6 +4,9 @@
  * Slug: radio-rucphen/home-live-hero
  * Categories: featured
  * Description: Live hero met now-playing en play-button.
+ *
+ * @package RadioRucphen
  */
+
 ?>
 <!-- wp:rucphen/live-hero /-->

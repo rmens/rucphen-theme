@@ -11,6 +11,9 @@ namespace RadioRucphen;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles Meta functionality.
+ */
 final class Meta {
 
 	public const HERO_TEXT_META = '_rucphen_hero_text';
@@ -19,20 +22,30 @@ final class Meta {
 	private const PROGRAM_NONCE   = 'rucphen_program_meta_nonce';
 	private const PRESENTER_NONCE = 'rucphen_presenter_meta_nonce';
 
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register(): void {
-		add_action( 'init', [ self::class, 'register_meta' ], 20 );
-		add_action( 'add_meta_boxes', [ self::class, 'add_meta_boxes' ] );
-		add_action( 'save_post', [ self::class, 'save_hero_meta' ], 10, 2 );
-		add_action( 'save_post_' . PostTypes::PROGRAM, [ self::class, 'save_program_meta' ], 10, 2 );
-		add_action( 'save_post_' . PostTypes::PRESENTER, [ self::class, 'save_presenter_programs' ], 10, 2 );
+		add_action( 'init', array( self::class, 'register_meta' ), 20 );
+		add_action( 'add_meta_boxes', array( self::class, 'add_meta_boxes' ) );
+		add_action( 'save_post', array( self::class, 'save_hero_meta' ), 10, 2 );
+		add_action( 'save_post_' . PostTypes::PROGRAM, array( self::class, 'save_program_meta' ), 10, 2 );
+		add_action( 'save_post_' . PostTypes::PRESENTER, array( self::class, 'save_presenter_programs' ), 10, 2 );
 	}
 
+	/**
+	 * Register meta.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register_meta(): void {
 		foreach ( self::hero_post_types() as $post_type ) {
 			self::register_field( $post_type, self::HERO_TEXT_META, 'textarea' );
 		}
 
-		$program_fields = [
+		$program_fields = array(
 			'_rucphen_program_short_description' => 'string',
 			'_rucphen_program_long_description'  => 'string',
 			'_rucphen_program_featured'          => 'boolean',
@@ -40,41 +53,41 @@ final class Meta {
 			'_rucphen_program_default_end'       => 'string',
 			'_rucphen_program_color'             => 'string',
 			'_rucphen_program_presenter_ids'     => 'array_int',
-		];
+		);
 		foreach ( $program_fields as $key => $type ) {
 			self::register_field( PostTypes::PROGRAM, $key, $type );
 		}
 		self::register_airtimes_field();
 
-		$presenter_fields = [
+		$presenter_fields = array(
 			'_rucphen_presenter_tagline'   => 'string',
 			'_rucphen_presenter_order'     => 'integer',
 			'_rucphen_presenter_facebook'  => 'string',
 			'_rucphen_presenter_instagram' => 'string',
 			'_rucphen_presenter_website'   => 'string',
-		];
+		);
 		foreach ( $presenter_fields as $key => $type ) {
 			self::register_field( PostTypes::PRESENTER, $key, $type );
 		}
 
-		$podcast_fields = [
+		$podcast_fields = array(
 			'_rucphen_podcast_program_slug'     => 'string',
 			'_rucphen_podcast_program_id'       => 'integer',
 			'_rucphen_podcast_date'             => 'string',
 			'_rucphen_podcast_duration_seconds' => 'integer',
 			'_rucphen_podcast_audio_url'        => 'string',
-		];
+		);
 		foreach ( $podcast_fields as $key => $type ) {
 			self::register_field( PostTypes::PODCAST, $key, $type );
 		}
 		self::register_podcast_tracks_field();
 
-		$event_fields = [
+		$event_fields = array(
 			'_rucphen_event_start'    => 'string',
 			'_rucphen_event_end'      => 'string',
 			'_rucphen_event_location' => 'string',
 			'_rucphen_event_url'      => 'string',
-		];
+		);
 		foreach ( $event_fields as $key => $type ) {
 			self::register_field( PostTypes::EVENT, $key, $type );
 		}
@@ -83,12 +96,17 @@ final class Meta {
 		self::register_field( 'post', '_rucphen_news_cover', 'string' );
 	}
 
+	/**
+	 * Add meta boxes.
+	 *
+	 * @return void Return value.
+	 */
 	public static function add_meta_boxes(): void {
 		foreach ( self::hero_post_types() as $post_type ) {
 			add_meta_box(
 				'rucphen-page-hero',
 				__( 'Hero', 'radio-rucphen' ),
-				[ self::class, 'render_hero_box' ],
+				array( self::class, 'render_hero_box' ),
 				$post_type,
 				'normal',
 				'default'
@@ -98,7 +116,7 @@ final class Meta {
 		add_meta_box(
 			'rucphen-program-broadcast',
 			__( 'Uitzending', 'radio-rucphen' ),
-			[ self::class, 'render_program_box' ],
+			array( self::class, 'render_program_box' ),
 			PostTypes::PROGRAM,
 			'normal',
 			'high'
@@ -107,13 +125,19 @@ final class Meta {
 		add_meta_box(
 			'rucphen-presenter-programs',
 			__( 'Programma\'s', 'radio-rucphen' ),
-			[ self::class, 'render_presenter_programs_box' ],
+			array( self::class, 'render_presenter_programs_box' ),
 			PostTypes::PRESENTER,
 			'side',
 			'default'
 		);
 	}
 
+	/**
+	 * Render hero box.
+	 *
+	 * @param \WP_Post $post Post.
+	 * @return void Return value.
+	 */
 	public static function render_hero_box( \WP_Post $post ): void {
 		wp_nonce_field( self::HERO_NONCE, self::HERO_NONCE );
 
@@ -127,20 +151,26 @@ final class Meta {
 		<?php
 	}
 
+	/**
+	 * Render program box.
+	 *
+	 * @param \WP_Post $post Post.
+	 * @return void Return value.
+	 */
 	public static function render_program_box( \WP_Post $post ): void {
 		wp_nonce_field( self::PROGRAM_NONCE, self::PROGRAM_NONCE );
 
-		$airtimes = self::airtimes_by_day( self::program_airtimes( $post->ID ) );
+		$airtimes      = self::airtimes_by_day( self::program_airtimes( $post->ID ) );
 		$presenter_ids = array_map( 'intval', (array) get_post_meta( $post->ID, '_rucphen_program_presenter_ids', true ) );
-		$presenters = get_posts(
-			[
+		$presenters    = get_posts(
+			array(
 				'post_type'      => PostTypes::PRESENTER,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 		?>
 		<p><?php esc_html_e( 'Beheer hier de uitzendmomenten en vaste presentatoren van dit programma.', 'radio-rucphen' ); ?></p>
@@ -153,13 +183,14 @@ final class Meta {
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach ( self::day_options() as $day => $label ) :
+				<?php
+				foreach ( self::day_options() as $day => $label ) :
 					$row = $airtimes[ $day ] ?? null;
 					?>
 					<tr>
 						<td>
 							<label>
-								<input type="checkbox" name="rucphen_program_airtimes[<?php echo esc_attr( $day ); ?>][enabled]" value="1" <?php checked( $row !== null ); ?>>
+								<input type="checkbox" name="rucphen_program_airtimes[<?php echo esc_attr( $day ); ?>][enabled]" value="1" <?php checked( null !== $row ); ?>>
 								<?php echo esc_html( $label ); ?>
 							</label>
 						</td>
@@ -171,7 +202,7 @@ final class Meta {
 		</table>
 
 		<h3><?php esc_html_e( 'Presentatoren', 'radio-rucphen' ); ?></h3>
-		<?php if ( $presenters === [] ) : ?>
+		<?php if ( array() === $presenters ) : ?>
 			<p><?php esc_html_e( 'Nog geen presentatoren aangemaakt.', 'radio-rucphen' ); ?></p>
 		<?php else : ?>
 			<?php foreach ( $presenters as $presenter ) : ?>
@@ -186,21 +217,27 @@ final class Meta {
 		<?php
 	}
 
+	/**
+	 * Render presenter programs box.
+	 *
+	 * @param \WP_Post $post Post.
+	 * @return void Return value.
+	 */
 	public static function render_presenter_programs_box( \WP_Post $post ): void {
 		wp_nonce_field( self::PRESENTER_NONCE, self::PRESENTER_NONCE );
 
 		$programs = get_posts(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
-		if ( $programs === [] ) {
+		if ( array() === $programs ) {
 			echo '<p>' . esc_html__( 'Nog geen programma\'s aangemaakt.', 'radio-rucphen' ) . '</p>';
 			return;
 		}
@@ -218,16 +255,25 @@ final class Meta {
 		}
 	}
 
+	/**
+	 * Save hero meta.
+	 *
+	 * @param int      $post_id Post id.
+	 * @param \WP_Post $post Post.
+	 * @return void Return value.
+	 */
 	public static function save_hero_meta( int $post_id, \WP_Post $post ): void {
 		if ( ! in_array( $post->post_type, self::hero_post_types(), true ) || ! self::can_save( $post_id, self::HERO_NONCE ) ) {
 			return;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is verified by can_save() above.
 		$text = isset( $_POST['rucphen_hero_text'] )
 			? sanitize_textarea_field( (string) wp_unslash( $_POST['rucphen_hero_text'] ) )
 			: '';
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
-		if ( $text === '' ) {
+		if ( '' === $text ) {
 			delete_post_meta( $post_id, self::HERO_TEXT_META );
 			return;
 		}
@@ -235,36 +281,47 @@ final class Meta {
 		update_post_meta( $post_id, self::HERO_TEXT_META, $text );
 	}
 
+	/**
+	 * Save program meta.
+	 *
+	 * @param int      $post_id Post id.
+	 * @param \WP_Post $post Post.
+	 * @return void Return value.
+	 */
 	public static function save_program_meta( int $post_id, \WP_Post $post ): void {
+		unset( $post );
+
 		if ( ! self::can_save( $post_id, self::PROGRAM_NONCE ) ) {
 			return;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is verified by can_save() above.
 		$raw_rows = isset( $_POST['rucphen_program_airtimes'] ) && is_array( $_POST['rucphen_program_airtimes'] )
-			? (array) wp_unslash( $_POST['rucphen_program_airtimes'] )
-			: [];
-		$airtimes = [];
+			? map_deep( (array) wp_unslash( $_POST['rucphen_program_airtimes'] ), 'sanitize_text_field' )
+			: array();
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		$airtimes = array();
 		foreach ( array_keys( self::day_options() ) as $day ) {
-			$row = isset( $raw_rows[ $day ] ) && is_array( $raw_rows[ $day ] ) ? $raw_rows[ $day ] : [];
+			$row = isset( $raw_rows[ $day ] ) && is_array( $raw_rows[ $day ] ) ? $raw_rows[ $day ] : array();
 			if ( empty( $row['enabled'] ) ) {
 				continue;
 			}
 
 			$start = self::sanitize_time( (string) ( $row['start'] ?? '' ) );
 			$end   = self::sanitize_time( (string) ( $row['end'] ?? '' ) );
-			if ( $start === '' || $end === '' ) {
+			if ( '' === $start || '' === $end ) {
 				continue;
 			}
 
-			$airtimes[] = [
+			$airtimes[] = array(
 				'day'   => $day,
 				'start' => $start,
 				'end'   => $end,
-			];
+			);
 		}
 
 		update_post_meta( $post_id, '_rucphen_program_airtimes', $airtimes );
-		if ( $airtimes !== [] ) {
+		if ( array() !== $airtimes ) {
 			update_post_meta( $post_id, '_rucphen_program_default_start', $airtimes[0]['start'] );
 			update_post_meta( $post_id, '_rucphen_program_default_end', $airtimes[0]['end'] );
 		} else {
@@ -272,31 +329,44 @@ final class Meta {
 			delete_post_meta( $post_id, '_rucphen_program_default_end' );
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is verified by can_save() above.
 		$raw_presenters = isset( $_POST['rucphen_program_presenter_ids'] ) && is_array( $_POST['rucphen_program_presenter_ids'] )
-			? (array) wp_unslash( $_POST['rucphen_program_presenter_ids'] )
-			: [];
-		$presenter_ids = array_values( array_unique( array_filter( array_map( 'intval', $raw_presenters ) ) ) );
+			? array_map( 'absint', (array) wp_unslash( $_POST['rucphen_program_presenter_ids'] ) )
+			: array();
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		$presenter_ids = array_values( array_unique( array_filter( $raw_presenters ) ) );
 		update_post_meta( $post_id, '_rucphen_program_presenter_ids', $presenter_ids );
 	}
 
+	/**
+	 * Save presenter programs.
+	 *
+	 * @param int      $post_id Post id.
+	 * @param \WP_Post $post Post.
+	 * @return void Return value.
+	 */
 	public static function save_presenter_programs( int $post_id, \WP_Post $post ): void {
+		unset( $post );
+
 		if ( ! self::can_save( $post_id, self::PRESENTER_NONCE ) ) {
 			return;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is verified by can_save() above.
 		$raw_programs = isset( $_POST['rucphen_presenter_program_ids'] ) && is_array( $_POST['rucphen_presenter_program_ids'] )
-			? (array) wp_unslash( $_POST['rucphen_presenter_program_ids'] )
-			: [];
-		$selected = array_values( array_unique( array_filter( array_map( 'intval', $raw_programs ) ) ) );
+			? array_map( 'absint', (array) wp_unslash( $_POST['rucphen_presenter_program_ids'] ) )
+			: array();
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		$selected = array_values( array_unique( array_filter( $raw_programs ) ) );
 
 		$program_ids = get_posts(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'post_status'    => 'any',
 				'posts_per_page' => -1,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
 		foreach ( $program_ids as $program_id ) {
@@ -304,23 +374,25 @@ final class Meta {
 			if ( in_array( (int) $program_id, $selected, true ) ) {
 				$ids[] = $post_id;
 			} else {
-				$ids = array_values( array_diff( $ids, [ $post_id ] ) );
+				$ids = array_values( array_diff( $ids, array( $post_id ) ) );
 			}
 			update_post_meta( (int) $program_id, '_rucphen_program_presenter_ids', array_values( array_unique( $ids ) ) );
 		}
 	}
 
 	/**
-	 * @param mixed $value
-	 * @return array<int, array{day:string,start:string,end:string}>
+	 * Sanitize airtimes.
+	 *
+	 * @param mixed $value Value.
+	 * @return array Return value.
 	 */
 	public static function sanitize_airtimes( mixed $value ): array {
 		if ( ! is_array( $value ) ) {
-			return [];
+			return array();
 		}
 
 		$valid_days = array_keys( self::day_options() );
-		$airtimes = [];
+		$airtimes   = array();
 		foreach ( $value as $row ) {
 			if ( ! is_array( $row ) ) {
 				continue;
@@ -329,96 +401,121 @@ final class Meta {
 			$day   = sanitize_key( (string) ( $row['day'] ?? '' ) );
 			$start = self::sanitize_time( (string) ( $row['start'] ?? '' ) );
 			$end   = self::sanitize_time( (string) ( $row['end'] ?? '' ) );
-			if ( ! in_array( $day, $valid_days, true ) || $start === '' || $end === '' ) {
+			if ( ! in_array( $day, $valid_days, true ) || '' === $start || '' === $end ) {
 				continue;
 			}
 
-			$airtimes[] = [
+			$airtimes[] = array(
 				'day'   => $day,
 				'start' => $start,
 				'end'   => $end,
-			];
+			);
 		}
 
 		return $airtimes;
 	}
 
+	/**
+	 * Register field.
+	 *
+	 * @param string $post_type Post type.
+	 * @param string $key Key.
+	 * @param string $type Type.
+	 * @return void Return value.
+	 */
 	private static function register_field( string $post_type, string $key, string $type ): void {
-		$args = [
+		$args = array(
 			'type'              => str_starts_with( $type, 'array_' ) ? 'array' : $type,
 			'single'            => true,
-			'show_in_rest'      => $type === 'array_int'
-				? [ 'schema' => [ 'type' => 'array', 'items' => [ 'type' => 'integer' ] ] ]
+			'show_in_rest'      => 'array_int' === $type
+				? array(
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'integer' ),
+					),
+				)
 				: true,
 			'auth_callback'     => static fn(): bool => self::can_edit_type( $post_type ),
 			'sanitize_callback' => self::sanitizer_for( $type ),
-		];
+		);
 
 		register_post_meta( $post_type, $key, $args );
 	}
 
+	/**
+	 * Register airtimes field.
+	 *
+	 * @return void Return value.
+	 */
 	private static function register_airtimes_field(): void {
 		register_post_meta(
 			PostTypes::PROGRAM,
 			'_rucphen_program_airtimes',
-			[
+			array(
 				'type'              => 'array',
 				'single'            => true,
-				'show_in_rest'      => [
-					'schema' => [
+				'show_in_rest'      => array(
+					'schema' => array(
 						'type'  => 'array',
-						'items' => [
+						'items' => array(
 							'type'       => 'object',
-							'properties' => [
-								'day'   => [ 'type' => 'string' ],
-								'start' => [ 'type' => 'string' ],
-								'end'   => [ 'type' => 'string' ],
-							],
-						],
-					],
-				],
+							'properties' => array(
+								'day'   => array( 'type' => 'string' ),
+								'start' => array( 'type' => 'string' ),
+								'end'   => array( 'type' => 'string' ),
+							),
+						),
+					),
+				),
 				'auth_callback'     => static fn(): bool => self::can_edit_type( PostTypes::PROGRAM ),
-				'sanitize_callback' => [ self::class, 'sanitize_airtimes' ],
-			]
-		);
-	}
-
-	private static function register_podcast_tracks_field(): void {
-		register_post_meta(
-			PostTypes::PODCAST,
-			'_rucphen_podcast_tracks',
-			[
-				'type'              => 'array',
-				'single'            => true,
-				'show_in_rest'      => [
-					'schema' => [
-						'type'  => 'array',
-						'items' => [
-							'type'       => 'object',
-							'properties' => [
-								'time'   => [ 'type' => 'string' ],
-								'artist' => [ 'type' => 'string' ],
-								'title'  => [ 'type' => 'string' ],
-							],
-						],
-					],
-				],
-				'auth_callback'     => static fn(): bool => self::can_edit_type( PostTypes::PODCAST ),
-				'sanitize_callback' => [ self::class, 'sanitize_podcast_tracks' ],
-			]
+				'sanitize_callback' => array( self::class, 'sanitize_airtimes' ),
+			)
 		);
 	}
 
 	/**
-	 * @param mixed $value
-	 * @return array<int, array{time:string,artist:string,title:string}>
+	 * Register podcast tracks field.
+	 *
+	 * @return void Return value.
+	 */
+	private static function register_podcast_tracks_field(): void {
+		register_post_meta(
+			PostTypes::PODCAST,
+			'_rucphen_podcast_tracks',
+			array(
+				'type'              => 'array',
+				'single'            => true,
+				'show_in_rest'      => array(
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array(
+							'type'       => 'object',
+							'properties' => array(
+								'time'   => array( 'type' => 'string' ),
+								'artist' => array( 'type' => 'string' ),
+								'title'  => array( 'type' => 'string' ),
+							),
+						),
+					),
+				),
+				'auth_callback'     => static fn(): bool => self::can_edit_type( PostTypes::PODCAST ),
+				'sanitize_callback' => array( self::class, 'sanitize_podcast_tracks' ),
+			)
+		);
+	}
+
+	/**
+	 * Sanitize podcast tracks.
+	 *
+	 * @param mixed $value Value.
+	 * @return array Return value.
 	 */
 	public static function sanitize_podcast_tracks( mixed $value ): array {
 		if ( ! is_array( $value ) ) {
-			return [];
+			return array();
 		}
 
-		$tracks = [];
+		$tracks = array();
 		foreach ( $value as $row ) {
 			if ( ! is_array( $row ) ) {
 				continue;
@@ -427,38 +524,58 @@ final class Meta {
 			$time   = sanitize_text_field( (string) ( $row['time'] ?? '' ) );
 			$artist = sanitize_text_field( (string) ( $row['artist'] ?? '' ) );
 			$title  = sanitize_text_field( (string) ( $row['title'] ?? '' ) );
-			if ( $time === '' || ( $artist === '' && $title === '' ) ) {
+			if ( '' === $time || ( '' === $artist && '' === $title ) ) {
 				continue;
 			}
 
-			$tracks[] = [
+			$tracks[] = array(
 				'time'   => $time,
 				'artist' => $artist,
 				'title'  => $title,
-			];
+			);
 		}
 
 		return $tracks;
 	}
 
+	/**
+	 * Can edit type.
+	 *
+	 * @param string $post_type Post type.
+	 * @return bool Return value.
+	 */
 	private static function can_edit_type( string $post_type ): bool {
 		$obj = get_post_type_object( $post_type );
-		return $obj !== null && current_user_can( $obj->cap->edit_posts );
+		return null !== $obj && current_user_can( $obj->cap->edit_posts );
 	}
 
+	/**
+	 * Can save.
+	 *
+	 * @param int    $post_id Post id.
+	 * @param string $nonce_name Nonce name.
+	 * @return bool Return value.
+	 */
 	private static function can_save( int $post_id, string $nonce_name ): bool {
 		if ( wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
 			return false;
 		}
 
-		$nonce = isset( $_POST[ $nonce_name ] ) ? (string) wp_unslash( $_POST[ $nonce_name ] ) : '';
-		if ( $nonce === '' || ! wp_verify_nonce( $nonce, $nonce_name ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This line reads the nonce before verifying it below.
+		$nonce = isset( $_POST[ $nonce_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $nonce_name ] ) ) : '';
+		if ( '' === $nonce || ! wp_verify_nonce( $nonce, $nonce_name ) ) {
 			return false;
 		}
 
 		return current_user_can( 'edit_post', $post_id );
 	}
 
+	/**
+	 * Sanitizer for.
+	 *
+	 * @param string $type Type.
+	 * @return callable Return value.
+	 */
 	private static function sanitizer_for( string $type ): callable {
 		return match ( $type ) {
 			'integer'   => static fn( $v ) => (int) $v,
@@ -466,7 +583,7 @@ final class Meta {
 			'textarea'  => static fn( $v ) => is_string( $v ) ? sanitize_textarea_field( $v ) : '',
 			'array_int' => static function ( $v ): array {
 				if ( ! is_array( $v ) ) {
-					return [];
+					return array();
 				}
 				return array_values( array_unique( array_filter( array_map( 'intval', $v ) ) ) );
 			},
@@ -475,24 +592,28 @@ final class Meta {
 	}
 
 	/**
-	 * @return array<int, string>
+	 * Hero post types.
+	 *
+	 * @return array Return value.
 	 */
 	private static function hero_post_types(): array {
-		return [
+		return array(
 			'page',
 			'post',
 			PostTypes::PROGRAM,
 			PostTypes::PRESENTER,
 			PostTypes::PODCAST,
 			PostTypes::EVENT,
-		];
+		);
 	}
 
 	/**
-	 * @return array<string, string>
+	 * Day options.
+	 *
+	 * @return array Return value.
 	 */
 	private static function day_options(): array {
-		return [
+		return array(
 			'monday'    => __( 'Maandag', 'radio-rucphen' ),
 			'tuesday'   => __( 'Dinsdag', 'radio-rucphen' ),
 			'wednesday' => __( 'Woensdag', 'radio-rucphen' ),
@@ -500,22 +621,27 @@ final class Meta {
 			'friday'    => __( 'Vrijdag', 'radio-rucphen' ),
 			'saturday'  => __( 'Zaterdag', 'radio-rucphen' ),
 			'sunday'    => __( 'Zondag', 'radio-rucphen' ),
-		];
+		);
 	}
 
 	/**
-	 * @return array<int, array{day:string,start:string,end:string}>
+	 * Program airtimes.
+	 *
+	 * @param int $post_id Post id.
+	 * @return array Return value.
 	 */
 	private static function program_airtimes( int $post_id ): array {
 		return self::sanitize_airtimes( get_post_meta( $post_id, '_rucphen_program_airtimes', true ) );
 	}
 
 	/**
-	 * @param array<int, array{day:string,start:string,end:string}> $airtimes
-	 * @return array<string, array{day:string,start:string,end:string}>
+	 * Airtimes by day.
+	 *
+	 * @param array $airtimes Airtimes.
+	 * @return array Return value.
 	 */
 	private static function airtimes_by_day( array $airtimes ): array {
-		$by_day = [];
+		$by_day = array();
 		foreach ( $airtimes as $airtime ) {
 			if ( ! isset( $by_day[ $airtime['day'] ] ) ) {
 				$by_day[ $airtime['day'] ] = $airtime;
@@ -524,6 +650,12 @@ final class Meta {
 		return $by_day;
 	}
 
+	/**
+	 * Sanitize time.
+	 *
+	 * @param string $value Value.
+	 * @return string Return value.
+	 */
 	private static function sanitize_time( string $value ): string {
 		$value = trim( $value );
 		return preg_match( '/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value ) ? $value : '';

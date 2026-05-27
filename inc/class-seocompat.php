@@ -15,17 +15,35 @@ namespace RadioRucphen;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles SeoCompat functionality.
+ */
 final class SeoCompat {
 
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register(): void {
-		add_action( 'wp_head', [ self::class, 'maybe_render_fallback' ], 5 );
-		add_filter( 'wpseo_schema_graph_pieces', [ self::class, 'maybe_extend_schema' ], 11, 2 );
+		add_action( 'wp_head', array( self::class, 'maybe_render_fallback' ), 5 );
+		add_filter( 'wpseo_schema_graph_pieces', array( self::class, 'maybe_extend_schema' ), 11, 2 );
 	}
 
+	/**
+	 * Yoast active.
+	 *
+	 * @return bool Return value.
+	 */
 	public static function yoast_active(): bool {
 		return defined( 'WPSEO_VERSION' ) || class_exists( '\WPSEO_Frontend', false );
 	}
 
+	/**
+	 * Maybe render fallback.
+	 *
+	 * @return void Return value.
+	 */
 	public static function maybe_render_fallback(): void {
 		if ( self::yoast_active() ) {
 			return;
@@ -37,7 +55,7 @@ final class SeoCompat {
 		if ( is_singular() ) {
 			$post = get_post();
 			if ( $post instanceof \WP_Post ) {
-				$excerpt = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( wp_strip_all_tags( $post->post_content ), 30 );
+				$excerpt     = has_excerpt( $post ) ? get_the_excerpt( $post ) : wp_trim_words( wp_strip_all_tags( $post->post_content ), 30 );
 				$description = (string) $excerpt;
 			}
 		} elseif ( is_home() || is_front_page() ) {
@@ -49,7 +67,7 @@ final class SeoCompat {
 
 		$description = trim( preg_replace( '/\s+/u', ' ', $description ) ?? '' );
 
-		if ( $description !== '' ) {
+		if ( '' !== $description ) {
 			printf( '<meta name="description" content="%s">' . "\n", esc_attr( wp_html_excerpt( $description, 160, '...' ) ) );
 		}
 
@@ -62,11 +80,11 @@ final class SeoCompat {
 		printf( '<meta property="og:type" content="%s">' . "\n", is_singular() ? 'article' : 'website' );
 		printf( '<meta property="og:url" content="%s">' . "\n", esc_url( home_url( add_query_arg( null, null ) ) ) );
 
-		if ( $description !== '' ) {
+		if ( '' !== $description ) {
 			printf( '<meta property="og:description" content="%s">' . "\n", esc_attr( wp_html_excerpt( $description, 200, '...' ) ) );
 		}
 
-		if ( $image !== '' ) {
+		if ( '' !== $image ) {
 			printf( '<meta property="og:image" content="%s">' . "\n", esc_url( $image ) );
 		}
 
@@ -74,15 +92,17 @@ final class SeoCompat {
 	}
 
 	/**
-	 * Verrijking van Yoast's schema graph: hook voor toekomstige CPT-pieces.
+	 * Maybe extend schema.
 	 *
-	 * @param array<int, mixed> $pieces
-	 * @param mixed             $context
-	 * @return array<int, mixed>
+	 * @param mixed $pieces Pieces.
+	 * @param mixed $context Context.
+	 * @return array Return value.
 	 */
 	public static function maybe_extend_schema( $pieces, $context ): array {
+		unset( $context );
+
 		if ( ! is_array( $pieces ) ) {
-			return [];
+			return array();
 		}
 		return $pieces;
 	}

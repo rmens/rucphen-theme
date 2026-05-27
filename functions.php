@@ -14,7 +14,7 @@ define( 'RUCPHEN_THEME_VERSION', '0.1.0' );
 define( 'RUCPHEN_THEME_DIR', trailingslashit( get_template_directory() ) );
 define( 'RUCPHEN_THEME_URI', trailingslashit( get_template_directory_uri() ) );
 
-require_once RUCPHEN_THEME_DIR . 'inc/Autoload.php';
+require_once RUCPHEN_THEME_DIR . 'inc/class-autoload.php';
 
 \RadioRucphen\Autoload::register();
 

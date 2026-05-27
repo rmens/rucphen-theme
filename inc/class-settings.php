@@ -12,53 +12,66 @@ namespace RadioRucphen;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles Settings functionality.
+ */
 final class Settings {
 
-	public const OPTION_STATION       = 'rucphen_station';
-	public const OPTION_STREAM        = 'rucphen_stream';
-	public const OPTION_CONTACT       = 'rucphen_contact';
-	public const OPTION_FREQUENCIES   = 'rucphen_frequencies';
-	public const OPTION_ORGANIZATION  = 'rucphen_organization';
-	public const OPTION_NEWSLETTER    = 'rucphen_newsletter';
-	public const OPTION_ZWU           = 'rucphen_zwu';
+	public const OPTION_STATION      = 'rucphen_station';
+	public const OPTION_STREAM       = 'rucphen_stream';
+	public const OPTION_CONTACT      = 'rucphen_contact';
+	public const OPTION_FREQUENCIES  = 'rucphen_frequencies';
+	public const OPTION_ORGANIZATION = 'rucphen_organization';
+	public const OPTION_NEWSLETTER   = 'rucphen_newsletter';
+	public const OPTION_ZWU          = 'rucphen_zwu';
 
-	public const MENU_SLUG = 'radio-rucphen-settings';
+	public const MENU_SLUG                      = 'radio-rucphen-settings';
 	public const DEFAULT_METADATA_WEBSOCKET_URL = 'wss://metadata-rucphen.zuidwest.cloud/ws/metadata';
 
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register(): void {
-		add_action( 'admin_menu', [ self::class, 'register_menu' ] );
-		add_action( 'admin_init', [ self::class, 'register_settings' ] );
-		add_action( 'admin_post_rucphen_zwu_run_now', [ self::class, 'handle_run_zwu_now' ] );
+		add_action( 'admin_menu', array( self::class, 'register_menu' ) );
+		add_action( 'admin_init', array( self::class, 'register_settings' ) );
+		add_action( 'admin_post_rucphen_zwu_run_now', array( self::class, 'handle_run_zwu_now' ) );
 	}
 
+	/**
+	 * Defaults.
+	 *
+	 * @return array Return value.
+	 */
 	public static function defaults(): array {
-		return [
-			self::OPTION_STATION => [
-				'name'              => 'Radio Rucphen',
-				'tagline'           => 'Het geluid van Rucphen',
-				'logo_id'           => 0,
-				'square_icon_id'    => 0,
-				'hero_background_id'=> 0,
-			],
-			self::OPTION_STREAM => [
-				'stream_url'                       => 'https://icecast.zuidwest.cloud/radiorucphen.mp3',
-				'metadata_provider'                => 'zwfm-metadata',
-				'metadata_websocket_url'           => self::DEFAULT_METADATA_WEBSOCKET_URL,
-				'metadata_http_fallback_url'       => '',
-				'metadata_stale_after_seconds'     => 60,
-				'metadata_reconnect_min_seconds'   => 2,
-				'metadata_reconnect_max_seconds'   => 30,
-				'cover_lookup_enabled'             => true,
-			],
-			self::OPTION_CONTACT => [
-				'email_studio'           => 'studio@radiorucphen.nl',
-				'email_redactie'         => 'redactie@radiorucphen.nl',
-				'whatsapp_number'        => '31600000000',
-				'whatsapp_default_text'  => 'Hoi studio, mijn verzoekje is...',
-				'address'                => '',
-				'show_opening_hours'     => false,
-			],
-			self::OPTION_FREQUENCIES => [
+		return array(
+			self::OPTION_STATION      => array(
+				'name'               => 'Radio Rucphen',
+				'tagline'            => 'Het geluid van Rucphen',
+				'logo_id'            => 0,
+				'square_icon_id'     => 0,
+				'hero_background_id' => 0,
+			),
+			self::OPTION_STREAM       => array(
+				'stream_url'                     => 'https://icecast.zuidwest.cloud/radiorucphen.mp3',
+				'metadata_provider'              => 'zwfm-metadata',
+				'metadata_websocket_url'         => self::DEFAULT_METADATA_WEBSOCKET_URL,
+				'metadata_http_fallback_url'     => '',
+				'metadata_stale_after_seconds'   => 60,
+				'metadata_reconnect_min_seconds' => 2,
+				'metadata_reconnect_max_seconds' => 30,
+				'cover_lookup_enabled'           => true,
+			),
+			self::OPTION_CONTACT      => array(
+				'email_studio'          => 'studio@radiorucphen.nl',
+				'email_redactie'        => 'redactie@radiorucphen.nl',
+				'whatsapp_number'       => '31600000000',
+				'whatsapp_default_text' => 'Hoi studio, mijn verzoekje is...',
+				'address'               => '',
+				'show_opening_hours'    => false,
+			),
+			self::OPTION_FREQUENCIES  => array(
 				'fm_mhz'         => '106.4',
 				'dab_blocks'     => '8C, 8A',
 				'coverage'       => 'West-Brabant en Zeeland',
@@ -66,22 +79,22 @@ final class Settings {
 				'cable_channel'  => '',
 				'radioplayer'    => '',
 				'tunein'         => '',
-			],
-			self::OPTION_ORGANIZATION => [
-				'legal_name'        => 'Stichting Rucphen RTV',
-				'anbi'              => true,
-				'kvk'               => '',
-				'rsin'              => '',
-				'iban'              => '',
-				'jaarverslag_id'    => 0,
-				'redactiestatuut'   => '',
-			],
-			self::OPTION_NEWSLETTER => [
-				'provider'             => 'none',
-				'placeholder_active'   => true,
+			),
+			self::OPTION_ORGANIZATION => array(
+				'legal_name'      => 'Stichting Rucphen RTV',
+				'anbi'            => true,
+				'kvk'             => '',
+				'rsin'            => '',
+				'iban'            => '',
+				'jaarverslag_id'  => 0,
+				'redactiestatuut' => '',
+			),
+			self::OPTION_NEWSLETTER   => array(
+				'provider'               => 'none',
+				'placeholder_active'     => true,
 				'fallback_whatsapp_text' => 'Zet mij op de nieuwsbrief-lijst',
-			],
-			self::OPTION_ZWU => [
+			),
+			self::OPTION_ZWU          => array(
 				'base_url'             => 'https://www.zuidwestupdate.nl/wp-json/wp/v2',
 				'allowed_region_slugs' => Taxonomies::ALLOWED_REGION_SLUGS,
 				'max_news'             => 12,
@@ -90,33 +103,44 @@ final class Settings {
 				'attribution_label'    => 'Zuidwest Update',
 				'store_remote_images'  => false,
 				'allow_video_embed'    => true,
-			],
-		];
+			),
+		);
 	}
 
+	/**
+	 * Get.
+	 *
+	 * @param string $option Option.
+	 * @return array Return value.
+	 */
 	public static function get( string $option ): array {
 		$defaults = self::defaults();
-		$default  = $defaults[ $option ] ?? [];
+		$default  = $defaults[ $option ] ?? array();
 		$value    = get_option( $option, $default );
 		if ( ! is_array( $value ) ) {
 			return $default;
 		}
 
 		$value = array_merge( $default, $value );
-		if ( $option === self::OPTION_STREAM && trim( (string) ( $value['metadata_websocket_url'] ?? '' ) ) === '' ) {
+		if ( self::OPTION_STREAM === $option && '' === trim( (string) ( $value['metadata_websocket_url'] ?? '' ) ) ) {
 			$value['metadata_websocket_url'] = $default['metadata_websocket_url'];
 		}
 
 		return $value;
 	}
 
+	/**
+	 * Register menu.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register_menu(): void {
 		add_menu_page(
 			__( 'Radio Rucphen', 'radio-rucphen' ),
 			__( 'Radio Rucphen', 'radio-rucphen' ),
 			'manage_options',
 			self::MENU_SLUG,
-			[ self::class, 'render_settings_page' ],
+			array( self::class, 'render_settings_page' ),
 			'dashicons-microphone',
 			20
 		);
@@ -127,12 +151,17 @@ final class Settings {
 			__( 'Instellingen', 'radio-rucphen' ),
 			'manage_options',
 			self::MENU_SLUG,
-			[ self::class, 'render_settings_page' ]
+			array( self::class, 'render_settings_page' )
 		);
 	}
 
+	/**
+	 * Register settings.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register_settings(): void {
-		$options = [
+		$options = array(
 			self::OPTION_STATION,
 			self::OPTION_STREAM,
 			self::OPTION_CONTACT,
@@ -140,28 +169,34 @@ final class Settings {
 			self::OPTION_ORGANIZATION,
 			self::OPTION_NEWSLETTER,
 			self::OPTION_ZWU,
-		];
+		);
 
 		foreach ( $options as $option ) {
 			register_setting(
 				'radio_rucphen',
 				$option,
-				[
+				array(
 					'type'              => 'array',
-					'sanitize_callback' => [ self::class, 'sanitize_array' ],
-					'default'           => self::defaults()[ $option ] ?? [],
+					'sanitize_callback' => array( self::class, 'sanitize_array' ),
+					'default'           => self::defaults()[ $option ] ?? array(),
 					'show_in_rest'      => false,
-				]
+				)
 			);
 		}
 	}
 
+	/**
+	 * Sanitize array.
+	 *
+	 * @param mixed $value Value.
+	 * @return array Return value.
+	 */
 	public static function sanitize_array( $value ): array {
 		if ( ! is_array( $value ) ) {
-			return [];
+			return array();
 		}
 
-		$clean = [];
+		$clean = array();
 		foreach ( $value as $key => $v ) {
 			$key = (string) $key;
 			if ( is_array( $v ) ) {
@@ -180,18 +215,23 @@ final class Settings {
 		return $clean;
 	}
 
+	/**
+	 * Render settings page.
+	 *
+	 * @return void Return value.
+	 */
 	public static function render_settings_page(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		$station       = self::get( self::OPTION_STATION );
-		$stream        = self::get( self::OPTION_STREAM );
-		$contact       = self::get( self::OPTION_CONTACT );
-		$frequencies   = self::get( self::OPTION_FREQUENCIES );
-		$organization  = self::get( self::OPTION_ORGANIZATION );
-		$newsletter    = self::get( self::OPTION_NEWSLETTER );
-		$zwu           = self::get( self::OPTION_ZWU );
+		$station      = self::get( self::OPTION_STATION );
+		$stream       = self::get( self::OPTION_STREAM );
+		$contact      = self::get( self::OPTION_CONTACT );
+		$frequencies  = self::get( self::OPTION_FREQUENCIES );
+		$organization = self::get( self::OPTION_ORGANIZATION );
+		$newsletter   = self::get( self::OPTION_NEWSLETTER );
+		$zwu          = self::get( self::OPTION_ZWU );
 
 		$last_success = get_option( 'rucphen_zwu_last_success_at', '' );
 		$last_error   = get_option( 'rucphen_zwu_last_error', '' );
@@ -330,6 +370,11 @@ final class Settings {
 		<?php
 	}
 
+	/**
+	 * Handle run zwu now.
+	 *
+	 * @return void Return value.
+	 */
 	public static function handle_run_zwu_now(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Onvoldoende rechten.', 'radio-rucphen' ) );

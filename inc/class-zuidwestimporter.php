@@ -15,6 +15,9 @@ namespace RadioRucphen;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles ZuidwestImporter functionality.
+ */
 final class ZuidwestImporter {
 
 	public const OPTION_NEWS_CACHE   = 'rucphen_zwu_news_cache';
@@ -23,35 +26,65 @@ final class ZuidwestImporter {
 	public const OPTION_LAST_ERROR   = 'rucphen_zwu_last_error';
 	public const CRON_HOOK           = 'rucphen_zwu_import';
 
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register(): void {
-		add_action( self::CRON_HOOK, [ self::class, 'run' ] );
-		add_action( 'init', [ self::class, 'schedule' ] );
-		add_action( 'switch_theme', [ self::class, 'unschedule' ] );
+		add_action( self::CRON_HOOK, array( self::class, 'run' ) );
+		add_action( 'init', array( self::class, 'schedule' ) );
+		add_action( 'switch_theme', array( self::class, 'unschedule' ) );
 	}
 
+	/**
+	 * Schedule.
+	 *
+	 * @return void Return value.
+	 */
 	public static function schedule(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time() + 60, 'hourly', self::CRON_HOOK );
 		}
 	}
 
+	/**
+	 * Unschedule.
+	 *
+	 * @return void Return value.
+	 */
 	public static function unschedule(): void {
 		$timestamp = wp_next_scheduled( self::CRON_HOOK );
-		if ( $timestamp !== false ) {
+		if ( false !== $timestamp ) {
 			wp_unschedule_event( $timestamp, self::CRON_HOOK );
 		}
 	}
 
+	/**
+	 * Get news cache.
+	 *
+	 * @return array Return value.
+	 */
 	public static function get_news_cache(): array {
-		$value = get_option( self::OPTION_NEWS_CACHE, [] );
-		return is_array( $value ) ? $value : [];
+		$value = get_option( self::OPTION_NEWS_CACHE, array() );
+		return is_array( $value ) ? $value : array();
 	}
 
+	/**
+	 * Get videos cache.
+	 *
+	 * @return array Return value.
+	 */
 	public static function get_videos_cache(): array {
-		$value = get_option( self::OPTION_VIDEOS_CACHE, [] );
-		return is_array( $value ) ? $value : [];
+		$value = get_option( self::OPTION_VIDEOS_CACHE, array() );
+		return is_array( $value ) ? $value : array();
 	}
 
+	/**
+	 * Run.
+	 *
+	 * @return void Return value.
+	 */
 	public static function run(): void {
 		$settings = Settings::get( Settings::OPTION_ZWU );
 
@@ -59,7 +92,7 @@ final class ZuidwestImporter {
 		$videos_result = self::fetch_items( $settings, 'video' );
 
 		$any_success = false;
-		$errors      = [];
+		$errors      = array();
 
 		if ( is_wp_error( $news_result ) ) {
 			$errors[] = 'news: ' . $news_result->get_error_message();
@@ -79,7 +112,7 @@ final class ZuidwestImporter {
 			update_option( self::OPTION_LAST_SUCCESS, gmdate( 'c' ), false );
 		}
 
-		if ( $errors === [] ) {
+		if ( array() === $errors ) {
 			delete_option( self::OPTION_LAST_ERROR );
 		} else {
 			update_option( self::OPTION_LAST_ERROR, implode( ' | ', $errors ), false );
@@ -87,7 +120,10 @@ final class ZuidwestImporter {
 	}
 
 	/**
-	 * @return array<int, array<string, mixed>>|\WP_Error
+	 * Fetch items.
+	 *
+	 * @param array  $settings Settings.
+	 * @param string $format Format.
 	 */
 	private static function fetch_items( array $settings, string $format ) {
 		$base    = isset( $settings['base_url'] ) ? (string) $settings['base_url'] : '';
@@ -95,29 +131,29 @@ final class ZuidwestImporter {
 			? array_values( array_intersect( $settings['allowed_region_slugs'], Taxonomies::ALLOWED_REGION_SLUGS ) )
 			: Taxonomies::ALLOWED_REGION_SLUGS;
 
-		if ( $base === '' || $regions === [] ) {
+		if ( '' === $base || array() === $regions ) {
 			return new \WP_Error( 'rucphen_zwu_config', 'invalid config' );
 		}
 
-		$max = $format === 'video'
+		$max = 'video' === $format
 			? max( 1, (int) ( $settings['max_videos'] ?? 8 ) )
 			: max( 1, (int) ( $settings['max_news'] ?? 12 ) );
 
-		$query = [
+		$query = array(
 			'_embed'   => 1,
 			'per_page' => min( 50, $max * 2 ),
 			'orderby'  => 'date',
 			'order'    => 'desc',
-		];
+		);
 
 		$endpoint = trailingslashit( $base ) . 'posts?' . http_build_query( $query );
 
 		$response = wp_remote_get(
 			$endpoint,
-			[
+			array(
 				'timeout'    => 15,
 				'user-agent' => 'RadioRucphenTheme/' . RUCPHEN_THEME_VERSION,
-			]
+			)
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -135,22 +171,22 @@ final class ZuidwestImporter {
 			return new \WP_Error( 'rucphen_zwu_decode', 'invalid JSON response' );
 		}
 
-		$items = [];
-		$seen  = [];
+		$items = array();
+		$seen  = array();
 		foreach ( $raw as $entry ) {
 			if ( ! is_array( $entry ) ) {
 				continue;
 			}
 
 			$item = self::normalize( $entry, $regions );
-			if ( $item === null ) {
+			if ( null === $item ) {
 				continue;
 			}
 
-			if ( $format === 'video' && $item['format'] !== 'video' ) {
+			if ( 'video' === $format && 'video' !== $item['format'] ) {
 				continue;
 			}
-			if ( $format === 'standard' && $item['format'] === 'video' ) {
+			if ( 'standard' === $format && 'video' === $item['format'] ) {
 				continue;
 			}
 
@@ -169,9 +205,11 @@ final class ZuidwestImporter {
 	}
 
 	/**
-	 * @param array<string, mixed>       $entry
-	 * @param array<int, string>         $allowed_regions
-	 * @return array<string, mixed>|null
+	 * Normalize.
+	 *
+	 * @param array $entry Entry.
+	 * @param array $allowed_regions Allowed regions.
+	 * @return ?array Return value.
 	 */
 	private static function normalize( array $entry, array $allowed_regions ): ?array {
 		$id = isset( $entry['id'] ) ? (int) $entry['id'] : 0;
@@ -181,7 +219,7 @@ final class ZuidwestImporter {
 
 		$region_slug  = '';
 		$region_label = '';
-		$embedded     = $entry['_embedded']['wp:term'] ?? [];
+		$embedded     = $entry['_embedded']['wp:term'] ?? array();
 		if ( is_array( $embedded ) ) {
 			foreach ( $embedded as $taxonomy_terms ) {
 				if ( ! is_array( $taxonomy_terms ) ) {
@@ -201,7 +239,7 @@ final class ZuidwestImporter {
 			}
 		}
 
-		if ( $region_slug === '' ) {
+		if ( '' === $region_slug ) {
 			return null;
 		}
 
@@ -209,12 +247,12 @@ final class ZuidwestImporter {
 		$excerpt    = self::strip_to_plain( (string) ( $entry['excerpt']['rendered'] ?? '' ) );
 		$source_url = isset( $entry['link'] ) ? esc_url_raw( (string) $entry['link'] ) : '';
 		$published  = isset( $entry['date_gmt'] ) ? (string) $entry['date_gmt'] : '';
-		$format     = isset( $entry['format'] ) && (string) $entry['format'] === 'video' ? 'video' : 'standard';
+		$format     = isset( $entry['format'] ) && (string) 'video' === $entry['format'] ? 'video' : 'standard';
 
 		$image_url = '';
 		$media     = $entry['_embedded']['wp:featuredmedia'][0] ?? null;
 		if ( is_array( $media ) ) {
-			$sizes = $media['media_details']['sizes'] ?? [];
+			$sizes = $media['media_details']['sizes'] ?? array();
 			if ( is_array( $sizes ) && isset( $sizes['medium_large']['source_url'] ) ) {
 				$image_url = (string) $sizes['medium_large']['source_url'];
 			} elseif ( isset( $media['source_url'] ) ) {
@@ -223,15 +261,15 @@ final class ZuidwestImporter {
 		}
 
 		$video_embed = null;
-		if ( $format === 'video' && isset( $entry['content']['rendered'] ) ) {
+		if ( 'video' === $format && isset( $entry['content']['rendered'] ) ) {
 			$video_embed = self::extract_embed_url( (string) $entry['content']['rendered'] );
 		}
 
-		return [
+		return array(
 			'source_id'       => 'zwu-' . $id,
 			'source_name'     => 'Zuidwest Update',
 			'source_url'      => $source_url,
-			'published_at'    => $published !== '' ? $published . 'Z' : '',
+			'published_at'    => '' !== $published ? $published . 'Z' : '',
 			'title'           => $title,
 			'excerpt'         => $excerpt,
 			'image_url'       => esc_url_raw( $image_url ),
@@ -239,15 +277,27 @@ final class ZuidwestImporter {
 			'video_embed_url' => $video_embed,
 			'region_slug'     => $region_slug,
 			'region_label'    => $region_label,
-		];
+		);
 	}
 
+	/**
+	 * Strip to plain.
+	 *
+	 * @param string $html Html.
+	 * @return string Return value.
+	 */
 	private static function strip_to_plain( string $html ): string {
 		$text = wp_strip_all_tags( $html, true );
 		$text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		return trim( preg_replace( '/\s+/u', ' ', $text ) ?? '' );
 	}
 
+	/**
+	 * Extract embed url.
+	 *
+	 * @param string $html Html.
+	 * @return ?string Return value.
+	 */
 	private static function extract_embed_url( string $html ): ?string {
 		if ( preg_match( '#https?://(?:www\.)?(?:youtube\.com|youtu\.be|player\.vimeo\.com|vimeo\.com)/[^\s"\'<>]+#i', $html, $m ) === 1 ) {
 			return esc_url_raw( $m[0] );

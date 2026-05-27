@@ -11,6 +11,9 @@ namespace RadioRucphen;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles PostTypes functionality.
+ */
 final class PostTypes {
 
 	public const PROGRAM   = 'rucphen_program';
@@ -18,90 +21,112 @@ final class PostTypes {
 	public const PODCAST   = 'rucphen_podcast';
 	public const EVENT     = 'rucphen_event';
 
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register(): void {
-		add_action( 'init', [ self::class, 'register_types' ], 5 );
+		add_action( 'init', array( self::class, 'register_types' ), 5 );
 	}
 
+	/**
+	 * Register types.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register_types(): void {
 		register_post_type(
 			self::PROGRAM,
-			[
-				'labels' => [
+			array(
+				'labels'        => array(
 					'name'          => __( 'Programma\'s', 'radio-rucphen' ),
 					'singular_name' => __( 'Programma', 'radio-rucphen' ),
 					'add_new_item'  => __( 'Nieuw programma', 'radio-rucphen' ),
 					'edit_item'     => __( 'Programma bewerken', 'radio-rucphen' ),
 					'menu_name'     => __( 'Programma\'s', 'radio-rucphen' ),
-				],
+				),
 				'public'        => true,
 				'show_in_rest'  => true,
 				'has_archive'   => 'programma',
-				'rewrite'       => [ 'slug' => 'programma', 'with_front' => false ],
+				'rewrite'       => array(
+					'slug'       => 'programma',
+					'with_front' => false,
+				),
 				'menu_icon'     => 'dashicons-format-audio',
 				'menu_position' => 22,
-				'supports'      => [ 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ],
-				'template'      => [ [ 'core/paragraph', [ 'placeholder' => __( 'Programma omschrijving...', 'radio-rucphen' ) ] ] ],
-			]
+				'supports'      => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ),
+				'template'      => array( array( 'core/paragraph', array( 'placeholder' => __( 'Programma omschrijving...', 'radio-rucphen' ) ) ) ),
+			)
 		);
 
 		register_post_type(
 			self::PRESENTER,
-			[
-				'labels' => [
+			array(
+				'labels'        => array(
 					'name'          => __( 'Presentatoren', 'radio-rucphen' ),
 					'singular_name' => __( 'Presentator', 'radio-rucphen' ),
 					'add_new_item'  => __( 'Nieuwe presentator', 'radio-rucphen' ),
 					'edit_item'     => __( 'Presentator bewerken', 'radio-rucphen' ),
 					'menu_name'     => __( 'Presentatoren', 'radio-rucphen' ),
-				],
+				),
 				'public'        => true,
 				'show_in_rest'  => true,
 				'has_archive'   => 'djs',
-				'rewrite'       => [ 'slug' => 'djs', 'with_front' => false ],
+				'rewrite'       => array(
+					'slug'       => 'djs',
+					'with_front' => false,
+				),
 				'menu_icon'     => 'dashicons-businessperson',
 				'menu_position' => 24,
-				'supports'      => [ 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ],
-			]
+				'supports'      => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ),
+			)
 		);
 
 		register_post_type(
 			self::PODCAST,
-			[
-				'labels' => [
+			array(
+				'labels'        => array(
 					'name'          => __( 'Gemist', 'radio-rucphen' ),
 					'singular_name' => __( 'Uitzending gemist', 'radio-rucphen' ),
 					'add_new_item'  => __( 'Nieuwe uitzending', 'radio-rucphen' ),
 					'edit_item'     => __( 'Uitzending bewerken', 'radio-rucphen' ),
 					'menu_name'     => __( 'Gemist', 'radio-rucphen' ),
-				],
+				),
 				'public'        => true,
 				'show_in_rest'  => true,
 				'has_archive'   => 'podcasts',
-				'rewrite'       => [ 'slug' => 'podcasts', 'with_front' => false ],
+				'rewrite'       => array(
+					'slug'       => 'podcasts',
+					'with_front' => false,
+				),
 				'menu_icon'     => 'dashicons-playlist-audio',
 				'menu_position' => 23,
-				'supports'      => [ 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ],
-			]
+				'supports'      => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ),
+			)
 		);
 
 		register_post_type(
 			self::EVENT,
-			[
-				'labels' => [
+			array(
+				'labels'        => array(
 					'name'          => __( 'Agenda', 'radio-rucphen' ),
 					'singular_name' => __( 'Agenda-item', 'radio-rucphen' ),
 					'add_new_item'  => __( 'Nieuw agenda-item', 'radio-rucphen' ),
 					'edit_item'     => __( 'Agenda-item bewerken', 'radio-rucphen' ),
 					'menu_name'     => __( 'Agenda', 'radio-rucphen' ),
-				],
+				),
 				'public'        => true,
 				'show_in_rest'  => true,
 				'has_archive'   => 'agenda',
-				'rewrite'       => [ 'slug' => 'agenda', 'with_front' => false ],
+				'rewrite'       => array(
+					'slug'       => 'agenda',
+					'with_front' => false,
+				),
 				'menu_icon'     => 'dashicons-tickets-alt',
 				'menu_position' => 25,
-				'supports'      => [ 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ],
-			]
+				'supports'      => array( 'title', 'editor', 'excerpt', 'thumbnail', 'revisions' ),
+			)
 		);
 	}
 }

@@ -15,127 +15,150 @@ namespace RadioRucphen;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles Blocks functionality.
+ */
 final class Blocks {
 
-	public const NAMESPACE = 'rucphen';
-	private const CONTAINER = 'mx-auto w-[min(100%_-_2rem,var(--spacing-container))]';
-	private const SECTION_HEAD = 'mb-[1.55rem] flex items-end justify-between gap-4 max-[767px]:flex-col max-[767px]:items-start';
-	private const SECTION_TITLE = 'm-0 font-display text-[2.35rem] font-extrabold leading-[1.08] text-brand max-[767px]:text-[2rem]';
-	private const SECTION_SUBTITLE = 'mt-[0.45rem] text-ink-soft';
-	private const SECTION_ACTION = 'inline-flex min-h-11 w-fit items-center rounded-sm border border-[#c9d7ec] bg-white px-[0.95rem] py-[0.55rem] text-[0.95rem] font-extrabold text-brand no-underline hover:bg-[#e9eef7] hover:text-brand-dark';
-	private const LIVE_DOT = 'size-[0.55rem] animate-pulse rounded-full bg-success shadow-[0_0_0_0_rgb(22_163_74_/_0.58)]';
-	private const TEMPLATE_ONLY_BLOCKS = [ 'template-main', 'page-hero', 'breadcrumbs', 'hero-text' ];
+	public const NAMESPACE             = 'rucphen';
+	private const CONTAINER            = 'mx-auto w-[min(100%_-_2rem,var(--spacing-container))]';
+	private const SECTION_HEAD         = 'mb-[1.55rem] flex items-end justify-between gap-4 max-[767px]:flex-col max-[767px]:items-start';
+	private const SECTION_TITLE        = 'm-0 font-display text-[2.35rem] font-extrabold leading-[1.08] text-brand max-[767px]:text-[2rem]';
+	private const SECTION_SUBTITLE     = 'mt-[0.45rem] text-ink-soft';
+	private const SECTION_ACTION       = 'inline-flex min-h-11 w-fit items-center rounded-sm border border-[#c9d7ec] bg-white px-[0.95rem] py-[0.55rem] text-[0.95rem] font-extrabold text-brand no-underline hover:bg-[#e9eef7] hover:text-brand-dark';
+	private const LIVE_DOT             = 'size-[0.55rem] animate-pulse rounded-full bg-success shadow-[0_0_0_0_rgb(22_163_74_/_0.58)]';
+	private const TEMPLATE_ONLY_BLOCKS = array( 'template-main', 'page-hero', 'breadcrumbs', 'hero-text' );
+
+	/**
+	 * Tracks whether the Zuidwest modal has already been printed.
+	 *
+	 * @var bool
+	 */
 	private static $zuidwest_modal_printed = false;
 
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register(): void {
-		add_action( 'init', [ self::class, 'register_blocks' ] );
-		add_filter( 'allowed_block_types_all', [ self::class, 'filter_allowed_block_types' ], 10, 2 );
+		add_action( 'init', array( self::class, 'register_blocks' ) );
+		add_filter( 'allowed_block_types_all', array( self::class, 'filter_allowed_block_types' ), 10, 2 );
 	}
 
+	/**
+	 * Registers dynamic blocks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register_blocks(): void {
-		$blocks = [
-			'template-main'       => [ self::class, 'render_template_main' ],
-			'page-hero'           => [ self::class, 'render_page_hero' ],
-			'breadcrumbs'         => [ self::class, 'render_breadcrumbs' ],
-			'hero-text'           => [ self::class, 'render_hero_text' ],
-			'site-header'         => [ self::class, 'render_site_header' ],
-			'site-footer'         => [ self::class, 'render_site_footer' ],
-			'live-hero'           => [ self::class, 'render_live_hero' ],
-			'sticky-player'       => [ self::class, 'render_sticky_player' ],
-			'program-archive'     => [ self::class, 'render_program_archive' ],
-			'program-single'      => [ self::class, 'render_program_single' ],
-			'presenter-archive'   => [ self::class, 'render_presenter_archive' ],
-			'presenter-single'    => [ self::class, 'render_presenter_single' ],
-			'featured-programs'   => [ self::class, 'render_featured_programs' ],
-			'recent-podcasts'     => [ self::class, 'render_recent_podcasts' ],
-			'podcast-archive'     => [ self::class, 'render_podcast_archive' ],
-			'podcast-single'      => [ self::class, 'render_podcast_single' ],
-			'news-mixed-grid'     => [ self::class, 'render_news_mixed_grid' ],
-			'news-archive'        => [ self::class, 'render_news_archive' ],
-			'video-grid'          => [ self::class, 'render_video_grid' ],
-			'video-archive'       => [ self::class, 'render_video_archive' ],
-			'events-grid'         => [ self::class, 'render_events_grid' ],
-			'events-archive'      => [ self::class, 'render_events_archive' ],
-			'frequency-grid'      => [ self::class, 'render_frequency_grid' ],
-			'frequency-options'   => [ self::class, 'render_frequency_options' ],
-			'whatsapp-cta'        => [ self::class, 'render_whatsapp_cta' ],
-			'contact-details'     => [ self::class, 'render_contact_details' ],
-			'about-story'         => [ self::class, 'render_about_story' ],
-			'about-board'         => [ self::class, 'render_about_board' ],
-			'about-anbi'          => [ self::class, 'render_about_anbi' ],
-			'legal-content'       => [ self::class, 'render_legal_content' ],
-			'newsletter-signup'   => [ self::class, 'render_newsletter_signup' ],
-			'newsletter-cta'      => [ self::class, 'render_newsletter_cta' ],
-			'program-quick-links' => [ self::class, 'render_program_quick_links' ],
-		];
+		$blocks = array(
+			'template-main'       => array( self::class, 'render_template_main' ),
+			'page-hero'           => array( self::class, 'render_page_hero' ),
+			'breadcrumbs'         => array( self::class, 'render_breadcrumbs' ),
+			'hero-text'           => array( self::class, 'render_hero_text' ),
+			'site-header'         => array( self::class, 'render_site_header' ),
+			'site-footer'         => array( self::class, 'render_site_footer' ),
+			'live-hero'           => array( self::class, 'render_live_hero' ),
+			'sticky-player'       => array( self::class, 'render_sticky_player' ),
+			'program-archive'     => array( self::class, 'render_program_archive' ),
+			'program-single'      => array( self::class, 'render_program_single' ),
+			'presenter-archive'   => array( self::class, 'render_presenter_archive' ),
+			'presenter-single'    => array( self::class, 'render_presenter_single' ),
+			'featured-programs'   => array( self::class, 'render_featured_programs' ),
+			'recent-podcasts'     => array( self::class, 'render_recent_podcasts' ),
+			'podcast-archive'     => array( self::class, 'render_podcast_archive' ),
+			'podcast-single'      => array( self::class, 'render_podcast_single' ),
+			'news-mixed-grid'     => array( self::class, 'render_news_mixed_grid' ),
+			'news-archive'        => array( self::class, 'render_news_archive' ),
+			'video-grid'          => array( self::class, 'render_video_grid' ),
+			'video-archive'       => array( self::class, 'render_video_archive' ),
+			'events-grid'         => array( self::class, 'render_events_grid' ),
+			'events-archive'      => array( self::class, 'render_events_archive' ),
+			'frequency-grid'      => array( self::class, 'render_frequency_grid' ),
+			'frequency-options'   => array( self::class, 'render_frequency_options' ),
+			'whatsapp-cta'        => array( self::class, 'render_whatsapp_cta' ),
+			'contact-details'     => array( self::class, 'render_contact_details' ),
+			'about-story'         => array( self::class, 'render_about_story' ),
+			'about-board'         => array( self::class, 'render_about_board' ),
+			'about-anbi'          => array( self::class, 'render_about_anbi' ),
+			'legal-content'       => array( self::class, 'render_legal_content' ),
+			'newsletter-signup'   => array( self::class, 'render_newsletter_signup' ),
+			'newsletter-cta'      => array( self::class, 'render_newsletter_cta' ),
+			'program-quick-links' => array( self::class, 'render_program_quick_links' ),
+		);
 
 		$titles = self::block_titles();
 
 		foreach ( $blocks as $name => $callback ) {
-			$args = [
-				'api_version'     => 3,
-				'title'           => $titles[ $name ] ?? ucfirst( str_replace( '-', ' ', $name ) ),
-				'category'        => str_starts_with( $name, 'site-' ) || in_array( $name, [ 'template-main', 'page-hero', 'breadcrumbs', 'hero-text' ], true ) ? 'theme' : 'radio-rucphen',
-				'icon'            => 'microphone',
-				'description'     => sprintf( __( 'Radio Rucphen: %s.', 'radio-rucphen' ), $titles[ $name ] ?? $name ),
-				'supports'        => [
-					'html'     => false,
-					'align'    => false,
-					'inserter' => ! in_array( $name, self::TEMPLATE_ONLY_BLOCKS, true ),
-				],
-				'render_callback' => $callback,
-			];
+				$args = array(
+					'api_version'     => 3,
+					'title'           => $titles[ $name ] ?? ucfirst( str_replace( '-', ' ', $name ) ),
+					'category'        => str_starts_with( $name, 'site-' ) || in_array( $name, array( 'template-main', 'page-hero', 'breadcrumbs', 'hero-text' ), true ) ? 'theme' : 'radio-rucphen',
+					'icon'            => 'microphone',
+					// translators: %s: block title.
+					'description'     => sprintf( __( 'Radio Rucphen: %s.', 'radio-rucphen' ), $titles[ $name ] ?? $name ),
+					'supports'        => array(
+						'html'     => false,
+						'align'    => false,
+						'inserter' => ! in_array( $name, self::TEMPLATE_ONLY_BLOCKS, true ),
+					),
+					'render_callback' => $callback,
+				);
 
-			if ( $name === 'template-main' ) {
-				$args['attributes'] = [
-					'contained' => [
-						'type'    => 'boolean',
-						'default' => false,
-					],
-				];
-			}
+				if ( 'template-main' === $name ) {
+					$args['attributes'] = array(
+						'contained' => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+					);
+				}
 
-			if ( $name === 'page-hero' ) {
-				$args['attributes'] = [
-					'fallbackImage' => [
-						'type'    => 'string',
-						'default' => '',
-					],
-				];
-			}
+				if ( 'page-hero' === $name ) {
+					$args['attributes'] = array(
+						'fallbackImage' => array(
+							'type'    => 'string',
+							'default' => '',
+						),
+					);
+				}
 
-			if ( $name === 'breadcrumbs' ) {
-				$args['attributes'] = [
-					'variant' => [
-						'type'    => 'string',
-						'default' => 'hero',
-					],
-				];
-			}
+				if ( 'breadcrumbs' === $name ) {
+					$args['attributes'] = array(
+						'variant' => array(
+							'type'    => 'string',
+							'default' => 'hero',
+						),
+					);
+				}
 
-			if ( $name === 'hero-text' ) {
-				$args['attributes'] = [
-					'fallbackText' => [
-						'type'    => 'string',
-						'default' => '',
-					],
-				];
-			}
+				if ( 'hero-text' === $name ) {
+					$args['attributes'] = array(
+						'fallbackText' => array(
+							'type'    => 'string',
+							'default' => '',
+						),
+					);
+				}
 
-			register_block_type(
-				self::NAMESPACE . '/' . $name,
-				$args
-			);
+				register_block_type(
+					self::NAMESPACE . '/' . $name,
+					$args
+				);
 		}
 	}
 
 	/**
-	 * @param bool|array<int, string> $allowed_block_types
-	 * @param mixed $block_editor_context
-	 * @return bool|array<int, string>
+	 * Filters allowed block types.
+	 *
+	 * @param mixed $allowed_block_types Allowed block types.
+	 * @param mixed $block_editor_context Block editor context.
 	 */
 	public static function filter_allowed_block_types( $allowed_block_types, $block_editor_context = null ) {
-		if ( $allowed_block_types === false ) {
+		unset( $block_editor_context );
+
+		if ( false === $allowed_block_types ) {
 			return false;
 		}
 
@@ -153,10 +176,12 @@ final class Blocks {
 	}
 
 	/**
-	 * @return array<string, string>
+	 * Returns block titles.
+	 *
+	 * @return array Return value.
 	 */
 	private static function block_titles(): array {
-		return [
+		return array(
 			'template-main'       => __( 'Template main', 'radio-rucphen' ),
 			'page-hero'           => __( 'Pagina hero', 'radio-rucphen' ),
 			'breadcrumbs'         => __( 'Broodkruimels', 'radio-rucphen' ),
@@ -190,13 +215,17 @@ final class Blocks {
 			'newsletter-signup'   => __( 'Nieuwsbrief aanmelden', 'radio-rucphen' ),
 			'newsletter-cta'      => __( 'Nieuwsbrief CTA', 'radio-rucphen' ),
 			'program-quick-links' => __( 'Snelle programma-links', 'radio-rucphen' ),
-		];
+		);
 	}
 
 	/**
-	 * @param array<string, mixed> $attributes
+	 * Renders the main template block.
+	 *
+	 * @param array  $attributes Attributes.
+	 * @param string $content Content.
+	 * @return string Return value.
 	 */
-	public static function render_template_main( array $attributes = [], string $content = '' ): string {
+	public static function render_template_main( array $attributes = array(), string $content = '' ): string {
 		$content = trim( $content );
 
 		if ( ! empty( $attributes['contained'] ) ) {
@@ -214,28 +243,37 @@ final class Blocks {
 	}
 
 	/**
-	 * @param array<string, mixed> $attributes
+	 * Renders the page hero block.
+	 *
+	 * @param array  $attributes Attributes.
+	 * @param string $content Content.
+	 * @return string Return value.
 	 */
-	public static function render_page_hero( array $attributes = [], string $content = '' ): string {
-		$content = trim( $content );
-		$fallback = (string) ( $attributes['fallbackImage'] ?? '' );
+	public static function render_page_hero( array $attributes = array(), string $content = '' ): string {
+		$content    = trim( $content );
+		$fallback   = (string) ( $attributes['fallbackImage'] ?? '' );
 		$background = self::page_hero_background( $fallback );
-		$classes = 'relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand py-16 text-white';
-		$style = '';
+		$classes    = 'relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand py-16 text-white';
+		$style      = '';
 
-		if ( $background !== '' ) {
+		if ( '' !== $background ) {
 			$classes .= ' bg-[image:var(--hero-bg)] bg-cover bg-center';
-			$style = "--hero-bg:url('" . esc_url( $background ) . "')";
+			$style    = "--hero-bg:url('" . esc_url( $background ) . "')";
 		}
 
 		ob_start();
 		?>
-		<section class="<?php echo esc_attr( $classes ); ?>"<?php if ( $style !== '' ) : ?> style="<?php echo esc_attr( $style ); ?>"<?php endif; ?> data-component="page-hero">
-			<?php if ( $background !== '' ) : ?>
+		<section class="<?php echo esc_attr( $classes ); ?>"
+		<?php
+		if ( '' !== $style ) :
+			?>
+			style="<?php echo esc_attr( $style ); ?>"<?php endif; ?> data-component="page-hero">
+			<?php if ( '' !== $background ) : ?>
 				<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
 			<?php endif; ?>
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="max-w-[760px] [&_.wp-block-post-title]:m-0 [&_.wp-block-post-title]:font-display [&_.wp-block-post-title]:text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] [&_.wp-block-post-title]:font-extrabold [&_.wp-block-post-title]:leading-[1.08] [&_.wp-block-query-title]:m-0 [&_.wp-block-query-title]:font-display [&_.wp-block-query-title]:text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] [&_.wp-block-query-title]:font-extrabold [&_.wp-block-query-title]:leading-[1.08] [&_.wp-block-heading]:m-0 [&_.wp-block-heading]:font-display [&_.wp-block-heading]:text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] [&_.wp-block-heading]:font-extrabold [&_.wp-block-heading]:leading-[1.08]">
+					<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 					<?php echo $content; ?>
 				</div>
 			</div>
@@ -244,18 +282,24 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	public static function render_breadcrumbs( array $attributes = [] ): string {
+	/**
+	 * Renders breadcrumbs.
+	 *
+	 * @param array $attributes Attributes.
+	 * @return string Return value.
+	 */
+	public static function render_breadcrumbs( array $attributes = array() ): string {
 		$items = self::breadcrumb_items();
 		if ( count( $items ) < 2 ) {
 			return '';
 		}
 
-		$variant = (string) ( $attributes['variant'] ?? 'hero' );
-		$is_plain = $variant === 'plain';
-		$nav_class = $is_plain
+		$variant         = (string) ( $attributes['variant'] ?? 'hero' );
+		$is_plain        = 'plain' === $variant;
+		$nav_class       = $is_plain
 			? 'mb-6 text-sm font-bold text-ink-soft'
 			: 'mb-[0.9rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]';
-		$link_class = $is_plain
+		$link_class      = $is_plain
 			? 'text-brand no-underline hover:underline'
 			: 'text-[#bfdbfe] no-underline hover:text-white';
 		$separator_class = $is_plain ? 'text-ink-soft/50' : 'text-white/50';
@@ -266,8 +310,11 @@ final class Blocks {
 			<ol class="m-0 flex list-none flex-wrap items-center gap-2 p-0">
 				<?php foreach ( $items as $index => $item ) : ?>
 					<li class="m-0 flex items-center gap-2 p-0">
-						<?php if ( $index > 0 ) : ?><span class="<?php echo esc_attr( $separator_class ); ?>" aria-hidden="true">/</span><?php endif; ?>
-						<?php if ( ! empty( $item['url'] ) && $index !== array_key_last( $items ) ) : ?>
+						<?php
+						if ( $index > 0 ) :
+							?>
+							<span class="<?php echo esc_attr( $separator_class ); ?>" aria-hidden="true">/</span><?php endif; ?>
+						<?php if ( ! empty( $item['url'] ) && array_key_last( $items ) !== $index ) : ?>
 							<a class="<?php echo esc_attr( $link_class ); ?>" href="<?php echo esc_url( $item['url'] ); ?>"><?php echo esc_html( $item['label'] ); ?></a>
 						<?php else : ?>
 							<span aria-current="page"><?php echo esc_html( $item['label'] ); ?></span>
@@ -280,20 +327,26 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	public static function render_hero_text( array $attributes = [] ): string {
+	/**
+	 * Renders hero text.
+	 *
+	 * @param array $attributes Attributes.
+	 * @return string Return value.
+	 */
+	public static function render_hero_text( array $attributes = array() ): string {
 		$text = self::hero_text();
-		if ( $text === '' ) {
+		if ( '' === $text ) {
 			$text = trim( (string) ( $attributes['fallbackText'] ?? '' ) );
 		}
 
-		if ( $text === '' ) {
+		if ( '' === $text ) {
 			return '';
 		}
 
-		$paragraphs = preg_split( '/\R{2,}/', str_replace( [ "\r\n", "\r" ], "\n", $text ) );
-		$paragraphs = array_values( array_filter( array_map( 'trim', is_array( $paragraphs ) ? $paragraphs : [] ) ) );
+		$paragraphs = preg_split( '/\R{2,}/', str_replace( array( "\r\n", "\r" ), "\n", $text ) );
+		$paragraphs = array_values( array_filter( array_map( 'trim', is_array( $paragraphs ) ? $paragraphs : array() ) ) );
 
-		if ( $paragraphs === [] ) {
+		if ( array() === $paragraphs ) {
 			return '';
 		}
 
@@ -309,15 +362,27 @@ final class Blocks {
 		);
 	}
 
+	/**
+	 * Theme img.
+	 *
+	 * @param string $rel Rel.
+	 * @return string Return value.
+	 */
 	private static function theme_img( string $rel ): string {
 		return RUCPHEN_THEME_URI . 'assets/img/' . ltrim( $rel, '/' );
 	}
 
+	/**
+	 * Page hero background.
+	 *
+	 * @param string $fallback Fallback.
+	 * @return string Return value.
+	 */
 	private static function page_hero_background( string $fallback ): string {
 		$post_id = self::hero_source_post_id();
 		if ( $post_id > 0 && has_post_thumbnail( $post_id ) ) {
 			$thumbnail = get_the_post_thumbnail_url( $post_id, 'full' );
-			if ( is_string( $thumbnail ) && $thumbnail !== '' ) {
+			if ( is_string( $thumbnail ) && '' !== $thumbnail ) {
 				return $thumbnail;
 			}
 		}
@@ -326,23 +391,28 @@ final class Blocks {
 			return $fallback;
 		}
 
-		if ( $fallback !== '' ) {
+		if ( '' !== $fallback ) {
 			return self::theme_img( $fallback );
 		}
 
 		return '';
 	}
 
+	/**
+	 * Hero text.
+	 *
+	 * @return string Return value.
+	 */
 	private static function hero_text(): string {
 		$post_id = self::hero_source_post_id();
 		if ( $post_id > 0 ) {
 			$text = trim( (string) get_post_meta( $post_id, Meta::HERO_TEXT_META, true ) );
-			if ( $text !== '' ) {
+			if ( '' !== $text ) {
 				return $text;
 			}
 
 			$excerpt = trim( wp_strip_all_tags( get_the_excerpt( $post_id ) ) );
-			if ( $excerpt !== '' ) {
+			if ( '' !== $excerpt ) {
 				return $excerpt;
 			}
 		}
@@ -354,6 +424,11 @@ final class Blocks {
 		return '';
 	}
 
+	/**
+	 * Hero source post id.
+	 *
+	 * @return int Return value.
+	 */
 	private static function hero_source_post_id(): int {
 		if ( is_singular() ) {
 			return (int) get_queried_object_id();
@@ -370,33 +445,40 @@ final class Blocks {
 		return 0;
 	}
 
+	/**
+	 * Archive page id.
+	 *
+	 * @return int Return value.
+	 */
 	private static function archive_page_id(): int {
-		$post_type = get_query_var( 'post_type' );
-		$post_type = is_array( $post_type ) ? reset( $post_type ) : $post_type;
+		$post_type        = get_query_var( 'post_type' );
+		$post_type        = is_array( $post_type ) ? reset( $post_type ) : $post_type;
 		$post_type_object = is_string( $post_type ) ? get_post_type_object( $post_type ) : null;
 		if ( ! $post_type_object ) {
 			return 0;
 		}
 
-		$rewrite = is_array( $post_type_object->rewrite ) ? $post_type_object->rewrite : [];
-		$archive_slug = is_string( $post_type_object->has_archive ) && $post_type_object->has_archive !== ''
+		$rewrite      = is_array( $post_type_object->rewrite ) ? $post_type_object->rewrite : array();
+		$archive_slug = is_string( $post_type_object->has_archive ) && '' !== $post_type_object->has_archive
 			? $post_type_object->has_archive
 			: (string) ( $rewrite['slug'] ?? $post_type );
-		$page = get_page_by_path( trim( $archive_slug, '/' ) );
+		$page         = get_page_by_path( trim( $archive_slug, '/' ) );
 
 		return $page instanceof \WP_Post ? (int) $page->ID : 0;
 	}
 
 	/**
-	 * @return array<int, array{label:string,url:string}>
+	 * Breadcrumb items.
+	 *
+	 * @return array Return value.
 	 */
 	private static function breadcrumb_items(): array {
-		$items = [
-			[
+		$items = array(
+			array(
 				'label' => __( 'Home', 'radio-rucphen' ),
 				'url'   => home_url( '/' ),
-			],
-		];
+			),
+		);
 
 		if ( is_front_page() ) {
 			return $items;
@@ -404,10 +486,10 @@ final class Blocks {
 
 		if ( is_home() ) {
 			$page_for_posts = (int) get_option( 'page_for_posts' );
-			$items[] = [
+			$items[]        = array(
 				'label' => $page_for_posts > 0 ? get_the_title( $page_for_posts ) : __( 'Nieuws', 'radio-rucphen' ),
 				'url'   => '',
-			];
+			);
 			return $items;
 		}
 
@@ -416,15 +498,15 @@ final class Blocks {
 			if ( $page instanceof \WP_Post ) {
 				$ancestors = array_reverse( get_post_ancestors( $page ) );
 				foreach ( $ancestors as $ancestor_id ) {
-					$items[] = [
+					$items[] = array(
 						'label' => get_the_title( $ancestor_id ),
 						'url'   => get_permalink( $ancestor_id ),
-					];
+					);
 				}
-				$items[] = [
+				$items[] = array(
 					'label' => get_the_title( $page ),
 					'url'   => '',
-				];
+				);
 			}
 			return $items;
 		}
@@ -434,56 +516,63 @@ final class Blocks {
 			if ( $post instanceof \WP_Post ) {
 				$post_type = get_post_type_object( $post->post_type );
 				if ( $post_type && ! empty( $post_type->has_archive ) ) {
-					$items[] = [
+					$archive_link = get_post_type_archive_link( $post->post_type );
+					$items[]      = array(
 						'label' => (string) $post_type->labels->name,
-						'url'   => get_post_type_archive_link( $post->post_type ) ?: '',
-					];
+						'url'   => false !== $archive_link ? $archive_link : '',
+					);
 				}
-				$items[] = [
+				$items[] = array(
 					'label' => get_the_title( $post ),
 					'url'   => '',
-				];
+				);
 			}
 			return $items;
 		}
 
 		if ( is_post_type_archive() ) {
-			$post_type = get_query_var( 'post_type' );
-			$post_type = is_array( $post_type ) ? reset( $post_type ) : $post_type;
+			$post_type        = get_query_var( 'post_type' );
+			$post_type        = is_array( $post_type ) ? reset( $post_type ) : $post_type;
 			$post_type_object = is_string( $post_type ) ? get_post_type_object( $post_type ) : null;
-			$items[] = [
+			$items[]          = array(
 				'label' => $post_type_object ? (string) $post_type_object->labels->name : wp_strip_all_tags( get_the_archive_title() ),
 				'url'   => '',
-			];
+			);
 			return $items;
 		}
 
 		if ( is_archive() ) {
-			$items[] = [
+			$items[] = array(
 				'label' => wp_strip_all_tags( get_the_archive_title() ),
 				'url'   => '',
-			];
+			);
 			return $items;
 		}
 
 		if ( is_search() ) {
-			$items[] = [
+			$items[] = array(
 				'label' => __( 'Zoeken', 'radio-rucphen' ),
 				'url'   => '',
-			];
+			);
 			return $items;
 		}
 
 		if ( is_404() ) {
-			$items[] = [
+			$items[] = array(
 				'label' => __( 'Pagina niet gevonden', 'radio-rucphen' ),
 				'url'   => '',
-			];
+			);
 		}
 
 		return $items;
 	}
 
+	/**
+	 * Program cover.
+	 *
+	 * @param \WP_Post $program Program.
+	 * @return string Return value.
+	 */
 	private static function program_cover( \WP_Post $program ): string {
 		if ( has_post_thumbnail( $program ) ) {
 			return (string) get_the_post_thumbnail_url( $program, 'rucphen-card' );
@@ -491,6 +580,12 @@ final class Blocks {
 		return self::theme_img( 'programs/' . $program->post_name . '.jpg' );
 	}
 
+	/**
+	 * Presenter cover.
+	 *
+	 * @param \WP_Post $presenter Presenter.
+	 * @return string Return value.
+	 */
 	private static function presenter_cover( \WP_Post $presenter ): string {
 		if ( has_post_thumbnail( $presenter ) ) {
 			return (string) get_the_post_thumbnail_url( $presenter, 'rucphen-portrait' );
@@ -498,9 +593,18 @@ final class Blocks {
 		return self::theme_img( 'djs/' . $presenter->post_name . '.jpg' );
 	}
 
+	/**
+	 * Section head.
+	 *
+	 * @param string  $title Title.
+	 * @param string  $sub Sub.
+	 * @param ?string $action_label Action label.
+	 * @param ?string $action_url Action url.
+	 * @return string Return value.
+	 */
 	private static function section_head( string $title, string $sub, ?string $action_label = null, ?string $action_url = null ): string {
 		$action = '';
-		if ( $action_label !== null && $action_url !== null ) {
+		if ( null !== $action_label && null !== $action_url ) {
 			$action = sprintf(
 				'<a class="%s" href="%s">%s</a>',
 				esc_attr( self::SECTION_ACTION ),
@@ -525,6 +629,11 @@ final class Blocks {
 		);
 	}
 
+	/**
+	 * Renders the site header.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_site_header(): string {
 		$station = Settings::get( Settings::OPTION_STATION );
 		$contact = Settings::get( Settings::OPTION_CONTACT );
@@ -544,15 +653,25 @@ final class Blocks {
 		<header class="sticky top-0 z-40 bg-white text-brand shadow-[0_1px_0_rgb(0_53_118_/_0.08)]">
 			<div class="hidden bg-brand text-[0.9rem] text-white lg:block">
 				<div class="<?php echo esc_attr( self::CONTAINER ); ?> flex min-h-9 items-center gap-[1.4rem]">
-					<?php if ( $studio_email !== '' ) : ?><a class="font-bold text-white no-underline" href="mailto:<?php echo esc_attr( $studio_email ); ?>"><?php echo esc_html( $studio_email ); ?></a><?php endif; ?>
-					<?php if ( $fm !== '' ) : ?><span><?php echo esc_html( $fm ); ?> FM</span><?php endif; ?>
-					<?php if ( $coverage !== '' ) : ?><span><?php echo esc_html( $coverage ); ?></span><?php endif; ?>
+					<?php
+					if ( '' !== $studio_email ) :
+						?>
+						<a class="font-bold text-white no-underline" href="mailto:<?php echo esc_attr( $studio_email ); ?>"><?php echo esc_html( $studio_email ); ?></a><?php endif; ?>
+					<?php
+					if ( '' !== $fm ) :
+						?>
+						<span><?php echo esc_html( $fm ); ?> FM</span><?php endif; ?>
+					<?php
+					if ( '' !== $coverage ) :
+						?>
+						<span><?php echo esc_html( $coverage ); ?></span><?php endif; ?>
 				</div>
 			</div>
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?> grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_minmax(190px,290px)_auto] items-center gap-[1.1rem] max-lg:flex max-lg:justify-between">
 				<a class="inline-flex min-h-11 min-w-0 items-center text-brand no-underline" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="<?php echo esc_attr( $station_name . ' home' ); ?>">
 					<img class="h-auto w-[119px] max-w-[42vw] object-contain" src="<?php echo esc_url( self::theme_img( 'logo-menu.png' ) ); ?>" width="119" height="44" alt="<?php echo esc_attr( $station_name ); ?>">
 				</a>
+				<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 				<?php echo $primary_menu; ?>
 				<button class="ml-auto inline-flex min-h-[42px] w-[min(100%,290px)] items-center justify-start justify-self-end gap-[0.65rem] rounded-full bg-[#e9eef7] px-[1.05rem] font-extrabold text-brand max-lg:size-11 max-lg:shrink-0 max-lg:justify-center max-lg:p-0" type="button" aria-label="<?php esc_attr_e( 'Zoeken', 'radio-rucphen' ); ?>" data-search-open>
 					<svg class="size-6 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.8 4a6.8 6.8 0 0 1 5.4 10.9l3.4 3.4-1.3 1.3-3.4-3.4A6.8 6.8 0 1 1 10.8 4Zm0 1.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg>
@@ -562,6 +681,7 @@ final class Blocks {
 			</div>
 			<div class="hidden bg-brand max-lg:block">
 				<div class="<?php echo esc_attr( self::CONTAINER ); ?> grid gap-1 py-2" data-mobile-panel hidden>
+					<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 					<?php echo self::render_mobile_nav_links(); ?>
 				</div>
 			</div>
@@ -586,15 +706,25 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render primary nav.
+	 *
+	 * @return string Return value.
+	 */
 	private static function render_primary_nav(): string {
 		$native = self::render_native_menu( 'primary', 'primary' );
-		if ( $native !== '' ) {
+		if ( '' !== $native ) {
 			return $native;
 		}
 
 		return self::render_primary_nav_fallback();
 	}
 
+	/**
+	 * Render primary nav fallback.
+	 *
+	 * @return string Return value.
+	 */
 	private static function render_primary_nav_fallback(): string {
 		$current      = home_url( add_query_arg( null, null ) );
 		$current_path = self::normalize_menu_path( $current );
@@ -610,12 +740,18 @@ final class Blocks {
 		ob_start();
 		?>
 		<nav class="flex min-w-0 items-center justify-start gap-[0.1rem] max-lg:hidden" aria-label="<?php esc_attr_e( 'Hoofdnavigatie', 'radio-rucphen' ); ?>">
-			<?php foreach ( $primary as $item ) :
+			<?php
+			foreach ( $primary as $item ) :
 				if ( self::is_radio_menu_item( $item ) ) :
 					?>
 					<details class="group relative">
-						<summary class="<?php echo esc_attr( $link_class ); ?> cursor-pointer list-none [&::-webkit-details-marker]:hidden"<?php if ( $is_radio ) : ?> aria-current="page"<?php endif; ?>>
+						<summary class="<?php echo esc_attr( $link_class ); ?> cursor-pointer list-none [&::-webkit-details-marker]:hidden"
+						<?php
+						if ( $is_radio ) :
+							?>
+							aria-current="page"<?php endif; ?>>
 							<?php echo esc_html( $item['title'] ); ?>
+							<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 							<?php echo $active_bar( $is_radio ); ?>
 						</summary>
 						<div class="<?php echo esc_attr( $menu_class ); ?>">
@@ -631,8 +767,13 @@ final class Blocks {
 				$item_path  = self::normalize_menu_path( $item['url'] );
 				$is_current = $item_path === $current_path;
 				?>
-				<a class="<?php echo esc_attr( $link_class ); ?>" href="<?php echo esc_url( $item['url'] ); ?>"<?php if ( $is_current ) : ?> aria-current="page"<?php endif; ?>>
+				<a class="<?php echo esc_attr( $link_class ); ?>" href="<?php echo esc_url( $item['url'] ); ?>"
+				<?php
+				if ( $is_current ) :
+					?>
+					aria-current="page"<?php endif; ?>>
 					<?php echo esc_html( $item['title'] ); ?>
+					<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 					<?php echo $active_bar( $is_current ); ?>
 				</a>
 			<?php endforeach; ?>
@@ -641,9 +782,14 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render mobile nav links.
+	 *
+	 * @return string Return value.
+	 */
 	private static function render_mobile_nav_links(): string {
 		$native = self::render_native_menu( 'mobile', 'mobile' );
-		if ( $native !== '' ) {
+		if ( '' !== $native ) {
 			return $native;
 		}
 
@@ -657,6 +803,13 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render native menu.
+	 *
+	 * @param string $location Location.
+	 * @param string $variant Variant.
+	 * @return string Return value.
+	 */
 	private static function render_native_menu( string $location, string $variant ): string {
 		if ( ! has_nav_menu( $location ) ) {
 			return '';
@@ -664,27 +817,27 @@ final class Blocks {
 
 		self::add_native_menu_filters();
 
-		$args = [
+		$args = array(
 			'theme_location'       => $location,
 			'container'            => false,
 			'fallback_cb'          => false,
 			'echo'                 => false,
-			'depth'                => $variant === 'primary' ? 2 : 1,
+			'depth'                => 'primary' === $variant ? 2 : 1,
 			'menu_class'           => self::native_menu_class( $variant ),
 			'items_wrap'           => '<ul id="%1$s" class="%2$s">%3$s</ul>',
 			'rucphen_variant'      => $variant,
 			'rucphen_current_path' => self::normalize_menu_path( home_url( add_query_arg( null, null ) ) ),
-		];
+		);
 
 		$html = wp_nav_menu( $args );
 
 		self::remove_native_menu_filters();
 
-		if ( ! is_string( $html ) || trim( $html ) === '' ) {
+		if ( ! is_string( $html ) || '' === trim( $html ) ) {
 			return '';
 		}
 
-		if ( $variant === 'primary' ) {
+		if ( 'primary' === $variant ) {
 			return sprintf(
 				'<nav class="flex min-w-0 items-center justify-start gap-[0.1rem] max-lg:hidden" aria-label="%s">%s</nav>',
 				esc_attr__( 'Hoofdnavigatie', 'radio-rucphen' ),
@@ -695,9 +848,14 @@ final class Blocks {
 		return $html;
 	}
 
+	/**
+	 * Render native radio submenu.
+	 *
+	 * @return string Return value.
+	 */
 	private static function render_native_radio_submenu(): string {
 		$native = self::render_native_menu_fragment( 'radio', 'primary-submenu' );
-		if ( $native !== '' ) {
+		if ( '' !== $native ) {
 			return $native;
 		}
 
@@ -712,13 +870,20 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render native menu fragment.
+	 *
+	 * @param string $location Location.
+	 * @param string $variant Variant.
+	 * @return string Return value.
+	 */
 	private static function render_native_menu_fragment( string $location, string $variant ): string {
 		if ( ! has_nav_menu( $location ) ) {
 			return '';
 		}
 
 		$html = wp_nav_menu(
-			[
+			array(
 				'theme_location'       => $location,
 				'container'            => false,
 				'fallback_cb'          => false,
@@ -728,37 +893,54 @@ final class Blocks {
 				'items_wrap'           => '<ul id="%1$s" class="%2$s">%3$s</ul>',
 				'rucphen_variant'      => $variant,
 				'rucphen_current_path' => self::normalize_menu_path( home_url( add_query_arg( null, null ) ) ),
-			]
+			)
 		);
 
 		return is_string( $html ) ? $html : '';
 	}
 
+	/**
+	 * Add native menu filters.
+	 *
+	 * @return void Return value.
+	 */
 	private static function add_native_menu_filters(): void {
-		add_filter( 'nav_menu_css_class', [ self::class, 'filter_nav_menu_css_class' ], 10, 4 );
-		add_filter( 'nav_menu_link_attributes', [ self::class, 'filter_nav_menu_link_attributes' ], 10, 4 );
-		add_filter( 'nav_menu_submenu_css_class', [ self::class, 'filter_nav_menu_submenu_css_class' ], 10, 3 );
-		add_filter( 'walker_nav_menu_start_el', [ self::class, 'filter_walker_nav_menu_start_el' ], 10, 4 );
-	}
-
-	private static function remove_native_menu_filters(): void {
-		remove_filter( 'nav_menu_css_class', [ self::class, 'filter_nav_menu_css_class' ], 10 );
-		remove_filter( 'nav_menu_link_attributes', [ self::class, 'filter_nav_menu_link_attributes' ], 10 );
-		remove_filter( 'nav_menu_submenu_css_class', [ self::class, 'filter_nav_menu_submenu_css_class' ], 10 );
-		remove_filter( 'walker_nav_menu_start_el', [ self::class, 'filter_walker_nav_menu_start_el' ], 10 );
+		add_filter( 'nav_menu_css_class', array( self::class, 'filter_nav_menu_css_class' ), 10, 4 );
+		add_filter( 'nav_menu_link_attributes', array( self::class, 'filter_nav_menu_link_attributes' ), 10, 4 );
+		add_filter( 'nav_menu_submenu_css_class', array( self::class, 'filter_nav_menu_submenu_css_class' ), 10, 3 );
+		add_filter( 'walker_nav_menu_start_el', array( self::class, 'filter_walker_nav_menu_start_el' ), 10, 4 );
 	}
 
 	/**
-	 * @param array<int, string> $classes
-	 * @return array<int, string>
+	 * Remove native menu filters.
+	 *
+	 * @return void Return value.
+	 */
+	private static function remove_native_menu_filters(): void {
+		remove_filter( 'nav_menu_css_class', array( self::class, 'filter_nav_menu_css_class' ), 10 );
+		remove_filter( 'nav_menu_link_attributes', array( self::class, 'filter_nav_menu_link_attributes' ), 10 );
+		remove_filter( 'nav_menu_submenu_css_class', array( self::class, 'filter_nav_menu_submenu_css_class' ), 10 );
+		remove_filter( 'walker_nav_menu_start_el', array( self::class, 'filter_walker_nav_menu_start_el' ), 10 );
+	}
+
+	/**
+	 * Filter nav menu css class.
+	 *
+	 * @param array $classes Classes.
+	 * @param mixed $item Item.
+	 * @param mixed $args Args.
+	 * @param int   $depth Depth.
+	 * @return array Return value.
 	 */
 	public static function filter_nav_menu_css_class( array $classes, $item, $args, int $depth ): array {
+		unset( $depth );
+
 		$variant = self::native_menu_variant( $args );
-		if ( $variant === '' ) {
+		if ( '' === $variant ) {
 			return $classes;
 		}
 
-		if ( $variant === 'primary' ) {
+		if ( 'primary' === $variant ) {
 			$classes[] = 'relative';
 			if ( in_array( 'menu-item-has-children', $classes, true ) || self::is_radio_wp_menu_item( $item ) ) {
 				$classes[] = 'group';
@@ -769,12 +951,17 @@ final class Blocks {
 	}
 
 	/**
-	 * @param array<string, string> $atts
-	 * @return array<string, string>
+	 * Filter nav menu link attributes.
+	 *
+	 * @param array $atts Atts.
+	 * @param mixed $item Item.
+	 * @param mixed $args Args.
+	 * @param int   $depth Depth.
+	 * @return array Return value.
 	 */
 	public static function filter_nav_menu_link_attributes( array $atts, $item, $args, int $depth ): array {
 		$variant = self::native_menu_variant( $args );
-		if ( $variant === '' ) {
+		if ( '' === $variant ) {
 			return $atts;
 		}
 
@@ -782,8 +969,8 @@ final class Blocks {
 		$current_path  = isset( $args->rucphen_current_path ) ? (string) $args->rucphen_current_path : '';
 		$item_url      = is_object( $item ) && isset( $item->url ) ? (string) $item->url : '';
 		$item_path     = self::normalize_menu_path( $item_url );
-		$is_hash_link  = isset( $item_url[0] ) && $item_url[0] === '#';
-		$is_active     = $is_active || ( ! $is_hash_link && $current_path !== '' && $item_path === $current_path );
+		$is_hash_link  = isset( $item_url[0] ) && '#' === $item_url[0];
+		$is_active     = $is_active || ( ! $is_hash_link && '' !== $current_path && $item_path === $current_path );
 		$radio_current = self::is_radio_wp_menu_item( $item ) && self::menu_items_contain_current_path( self::menu_items_for_location( 'radio', self::default_radio_menu_items() ), $current_path );
 		$atts['class'] = self::native_link_class( $variant, $depth, $is_active || $radio_current );
 
@@ -795,31 +982,58 @@ final class Blocks {
 	}
 
 	/**
-	 * @param array<int, string> $classes
-	 * @return array<int, string>
+	 * Filter nav menu submenu css class.
+	 *
+	 * @param array $classes Classes.
+	 * @param mixed $args Args.
+	 * @param int   $depth Depth.
+	 * @return array Return value.
 	 */
 	public static function filter_nav_menu_submenu_css_class( array $classes, $args, int $depth ): array {
+		unset( $depth );
+
 		$variant = self::native_menu_variant( $args );
-		if ( $variant !== 'primary' ) {
+		if ( 'primary' !== $variant ) {
 			return $classes;
 		}
 
 		return array_merge( $classes, self::class_list( self::native_menu_class( 'primary-submenu' ) ) );
 	}
 
+	/**
+	 * Filter walker nav menu start el.
+	 *
+	 * @param string $item_output Item output.
+	 * @param mixed  $item Item.
+	 * @param int    $depth Depth.
+	 * @param mixed  $args Args.
+	 * @return string Return value.
+	 */
 	public static function filter_walker_nav_menu_start_el( string $item_output, $item, int $depth, $args ): string {
 		$variant = self::native_menu_variant( $args );
-		if ( $variant !== 'primary' || $depth !== 0 || ! self::is_radio_wp_menu_item( $item ) || self::wp_menu_item_has_children( $item ) ) {
+		if ( 'primary' !== $variant || 0 !== $depth || ! self::is_radio_wp_menu_item( $item ) || self::wp_menu_item_has_children( $item ) ) {
 			return $item_output;
 		}
 
 		return $item_output . self::render_native_radio_submenu();
 	}
 
+	/**
+	 * Native menu variant.
+	 *
+	 * @param mixed $args Args.
+	 * @return string Return value.
+	 */
 	private static function native_menu_variant( $args ): string {
 		return is_object( $args ) && isset( $args->rucphen_variant ) ? (string) $args->rucphen_variant : '';
 	}
 
+	/**
+	 * Native menu class.
+	 *
+	 * @param string $variant Variant.
+	 * @return string Return value.
+	 */
 	private static function native_menu_class( string $variant ): string {
 		switch ( $variant ) {
 			case 'primary':
@@ -835,21 +1049,29 @@ final class Blocks {
 		}
 	}
 
+	/**
+	 * Native link class.
+	 *
+	 * @param string $variant Variant.
+	 * @param int    $depth Depth.
+	 * @param bool   $active Active.
+	 * @return string Return value.
+	 */
 	private static function native_link_class( string $variant, int $depth, bool $active ): string {
-		if ( $variant === 'primary' && $depth === 0 ) {
+		if ( 'primary' === $variant && 0 === $depth ) {
 			$active_class = $active ? ' after:absolute after:inset-x-[0.8rem] after:bottom-0 after:h-[3px] after:bg-cyan' : '';
 			return 'relative inline-flex min-h-[72px] items-center whitespace-nowrap px-[0.8rem] text-[0.95rem] font-extrabold text-brand no-underline hover:bg-[#f0f5fb] hover:text-brand' . $active_class;
 		}
 
-		if ( $variant === 'primary' || $variant === 'primary-submenu' ) {
+		if ( 'primary' === $variant || 'primary-submenu' === $variant ) {
 			return 'block rounded-sm px-3 py-2 text-sm font-extrabold text-brand no-underline hover:bg-[#f0f5fb]';
 		}
 
-		if ( $variant === 'mobile' ) {
+		if ( 'mobile' === $variant ) {
 			return 'block rounded-sm px-3 py-2 text-base font-extrabold text-white no-underline hover:bg-white/10';
 		}
 
-		if ( $variant === 'footer' ) {
+		if ( 'footer' === $variant ) {
 			return 'text-white/85 no-underline hover:text-accent';
 		}
 
@@ -857,15 +1079,23 @@ final class Blocks {
 	}
 
 	/**
-	 * @return array<int, string>
+	 * Class list.
+	 *
+	 * @param string $classes Classes.
+	 * @return array Return value.
 	 */
 	private static function class_list( string $classes ): array {
-		return array_values( array_filter( preg_split( '/\s+/', trim( $classes ) ) ?: [] ) );
+		$parts = preg_split( '/\s+/', trim( $classes ) );
+
+		return array_values( array_filter( false !== $parts ? $parts : array() ) );
 	}
 
 	/**
-	 * @param array<int, array{url:string,title:string}> $fallback
-	 * @return array<int, array{url:string,title:string}>
+	 * Menu items for location.
+	 *
+	 * @param string $location Location.
+	 * @param array  $fallback Fallback.
+	 * @return array Return value.
 	 */
 	private static function menu_items_for_location( string $location, array $fallback ): array {
 		$locations = get_nav_menu_locations();
@@ -874,70 +1104,130 @@ final class Blocks {
 		}
 
 		$items = wp_get_nav_menu_items( $locations[ $location ] );
-		if ( ! is_array( $items ) || $items === [] ) {
+		if ( ! is_array( $items ) || array() === $items ) {
 			return $fallback;
 		}
 
-		$normalized = [];
+		$normalized = array();
 		foreach ( $items as $item ) {
-			if ( (int) $item->menu_item_parent !== 0 ) {
+			if ( (int) 0 !== $item->menu_item_parent ) {
 				continue;
 			}
-			$normalized[] = [
+			$normalized[] = array(
 				'url'   => (string) $item->url,
 				'title' => (string) $item->title,
-			];
+			);
 		}
 
-		return $normalized === [] ? $fallback : $normalized;
+		return array() === $normalized ? $fallback : $normalized;
 	}
 
 	/**
-	 * @return array<int, array{url:string,title:string}>
+	 * Default primary menu items.
+	 *
+	 * @return array Return value.
 	 */
 	private static function default_primary_menu_items(): array {
-		return [
-			[ 'url' => home_url( '/' ), 'title' => __( 'Home', 'radio-rucphen' ) ],
-			[ 'url' => '#radio-luisteren', 'title' => __( 'Radio luisteren', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/podcasts/' ), 'title' => __( 'Gemist', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/agenda/' ), 'title' => __( 'Acties', 'radio-rucphen' ) ],
-		];
+		return array(
+			array(
+				'url'   => home_url( '/' ),
+				'title' => __( 'Home', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => '#radio-luisteren',
+				'title' => __( 'Radio luisteren', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/podcasts/' ),
+				'title' => __( 'Gemist', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/agenda/' ),
+				'title' => __( 'Acties', 'radio-rucphen' ),
+			),
+		);
 	}
 
 	/**
-	 * @return array<int, array{url:string,title:string}>
+	 * Default radio menu items.
+	 *
+	 * @return array Return value.
 	 */
 	private static function default_radio_menu_items(): array {
-		return [
-			[ 'url' => home_url( '/programma/' ), 'title' => __( 'Programmagids', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/djs/' ), 'title' => __( 'DJ\'s', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/frequenties/' ), 'title' => __( 'Frequenties', 'radio-rucphen' ) ],
-		];
+		return array(
+			array(
+				'url'   => home_url( '/programma/' ),
+				'title' => __( 'Programmagids', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/djs/' ),
+				'title' => __( 'DJ\'s', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/frequenties/' ),
+				'title' => __( 'Frequenties', 'radio-rucphen' ),
+			),
+		);
 	}
 
 	/**
-	 * @return array<int, array{url:string,title:string}>
+	 * Default mobile menu items.
+	 *
+	 * @return array Return value.
 	 */
 	private static function default_mobile_menu_items(): array {
-		return [
-			[ 'url' => home_url( '/' ), 'title' => __( 'Home', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/programma/' ), 'title' => __( 'Programmagids', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/djs/' ), 'title' => __( 'DJ\'s', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/frequenties/' ), 'title' => __( 'Frequenties', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/podcasts/' ), 'title' => __( 'Gemist', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/agenda/' ), 'title' => __( 'Acties en agenda', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/nieuws/' ), 'title' => __( 'Nieuws', 'radio-rucphen' ) ],
-			[ 'url' => home_url( '/contact/' ), 'title' => __( 'Contact', 'radio-rucphen' ) ],
-		];
+		return array(
+			array(
+				'url'   => home_url( '/' ),
+				'title' => __( 'Home', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/programma/' ),
+				'title' => __( 'Programmagids', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/djs/' ),
+				'title' => __( 'DJ\'s', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/frequenties/' ),
+				'title' => __( 'Frequenties', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/podcasts/' ),
+				'title' => __( 'Gemist', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/agenda/' ),
+				'title' => __( 'Acties en agenda', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/nieuws/' ),
+				'title' => __( 'Nieuws', 'radio-rucphen' ),
+			),
+			array(
+				'url'   => home_url( '/contact/' ),
+				'title' => __( 'Contact', 'radio-rucphen' ),
+			),
+		);
 	}
 
 	/**
-	 * @param array{url:string,title:string} $item
+	 * Is radio menu item.
+	 *
+	 * @param array $item Item.
+	 * @return bool Return value.
 	 */
 	private static function is_radio_menu_item( array $item ): bool {
-		return sanitize_title( $item['title'] ) === 'radio-luisteren' || $item['url'] === '#radio-luisteren';
+		return 'radio-luisteren' === sanitize_title( $item['title'] ) || '#radio-luisteren' === $item['url'];
 	}
 
+	/**
+	 * Is radio wp menu item.
+	 *
+	 * @param mixed $item Item.
+	 * @return bool Return value.
+	 */
 	private static function is_radio_wp_menu_item( $item ): bool {
 		if ( ! is_object( $item ) ) {
 			return false;
@@ -946,17 +1236,29 @@ final class Blocks {
 		$title = isset( $item->title ) ? (string) $item->title : '';
 		$url   = isset( $item->url ) ? (string) $item->url : '';
 
-		return sanitize_title( $title ) === 'radio-luisteren' || $url === '#radio-luisteren';
+		return 'radio-luisteren' === sanitize_title( $title ) || '#radio-luisteren' === $url;
 	}
 
+	/**
+	 * Is active wp menu item.
+	 *
+	 * @param mixed $item Item.
+	 * @return bool Return value.
+	 */
 	private static function is_active_wp_menu_item( $item ): bool {
 		if ( ! is_object( $item ) || ! isset( $item->classes ) || ! is_array( $item->classes ) ) {
 			return false;
 		}
 
-		return count( array_intersect( [ 'current-menu-item', 'current-menu-ancestor', 'current_page_item', 'current_page_ancestor' ], $item->classes ) ) > 0;
+		return count( array_intersect( array( 'current-menu-item', 'current-menu-ancestor', 'current_page_item', 'current_page_ancestor' ), $item->classes ) ) > 0;
 	}
 
+	/**
+	 * Wp menu item has children.
+	 *
+	 * @param mixed $item Item.
+	 * @return bool Return value.
+	 */
 	private static function wp_menu_item_has_children( $item ): bool {
 		return is_object( $item )
 			&& isset( $item->classes )
@@ -965,7 +1267,11 @@ final class Blocks {
 	}
 
 	/**
-	 * @param array<int, array{url:string,title:string}> $items
+	 * Menu items contain current path.
+	 *
+	 * @param array  $items Items.
+	 * @param string $current_path Current path.
+	 * @return bool Return value.
 	 */
 	private static function menu_items_contain_current_path( array $items, string $current_path ): bool {
 		foreach ( $items as $item ) {
@@ -976,6 +1282,13 @@ final class Blocks {
 		return false;
 	}
 
+	/**
+	 * Print mobile nav link.
+	 *
+	 * @param string $url Url.
+	 * @param string $title Title.
+	 * @return void Return value.
+	 */
 	private static function print_mobile_nav_link( string $url, string $title ): void {
 		printf(
 			'<a class="block rounded-sm px-3 py-2 text-base font-extrabold text-white no-underline hover:bg-white/10" href="%s">%s</a>',
@@ -984,21 +1297,33 @@ final class Blocks {
 		);
 	}
 
+	/**
+	 * Normalize menu path.
+	 *
+	 * @param string $url Url.
+	 * @return string Return value.
+	 */
 	private static function normalize_menu_path( string $url ): string {
 		$path = wp_parse_url( $url, PHP_URL_PATH );
-		if ( ! is_string( $path ) || $path === '' ) {
+		if ( ! is_string( $path ) || '' === $path ) {
 			$path = '/';
 		}
 
 		$path = '/' . ltrim( $path, '/' );
 		$path = untrailingslashit( $path );
 
-		return $path === '' ? '/' : $path;
+		return '' === $path ? '/' : $path;
 	}
 
+	/**
+	 * Is external url.
+	 *
+	 * @param string $url Url.
+	 * @return bool Return value.
+	 */
 	private static function is_external_url( string $url ): bool {
 		$host = wp_parse_url( $url, PHP_URL_HOST );
-		if ( ! is_string( $host ) || $host === '' ) {
+		if ( ! is_string( $host ) || '' === $host ) {
 			return false;
 		}
 
@@ -1006,19 +1331,24 @@ final class Blocks {
 		return is_string( $home_host ) && strtolower( $host ) !== strtolower( $home_host );
 	}
 
+	/**
+	 * Renders the site footer.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_site_footer(): string {
-		$station = Settings::get( Settings::OPTION_STATION );
-		$org     = Settings::get( Settings::OPTION_ORGANIZATION );
-		$year    = (int) wp_date( 'Y' );
-		$tagline = trim( (string) ( $station['tagline'] ?? '' ) );
-		$footer_intro = $tagline !== '' ? $tagline . ( str_ends_with( $tagline, '.' ) ? ' ' : '. ' ) : '';
+		$station      = Settings::get( Settings::OPTION_STATION );
+		$org          = Settings::get( Settings::OPTION_ORGANIZATION );
+		$year         = (int) wp_date( 'Y' );
+		$tagline      = trim( (string) ( $station['tagline'] ?? '' ) );
+		$footer_intro = '' !== $tagline ? $tagline . ( str_ends_with( $tagline, '.' ) ? ' ' : '. ' ) : '';
 
-		$footer_menus = [
+		$footer_menus = array(
 			'footer_listen'      => __( 'Luisteren', 'radio-rucphen' ),
 			'footer_participate' => __( 'Meedoen', 'radio-rucphen' ),
 			'footer_news'        => __( 'Nieuws', 'radio-rucphen' ),
 			'footer_legal'       => __( 'Juridisch', 'radio-rucphen' ),
-		];
+		);
 
 		ob_start();
 		?>
@@ -1029,22 +1359,33 @@ final class Blocks {
 						<h2 class="font-display text-2xl font-extrabold"><?php echo esc_html( (string) ( $station['name'] ?? 'Radio Rucphen' ) ); ?></h2>
 						<p class="mt-2 max-w-md text-white/75"><?php echo esc_html( $footer_intro ); ?><?php esc_html_e( 'Lokale radio voor de gemeente Rucphen en de directe regio.', 'radio-rucphen' ); ?></p>
 					</div>
-					<?php foreach ( $footer_menus as $loc => $title ) :
+					<?php
+					foreach ( $footer_menus as $loc => $title ) :
 						$menu = self::render_native_menu( $loc, 'footer' );
-						if ( $menu === '' ) {
+						if ( '' === $menu ) {
 							continue;
 						}
 						?>
 						<div>
 							<h3 class="font-display text-base font-extrabold uppercase tracking-wider"><?php echo esc_html( $title ); ?></h3>
+							<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 							<?php echo $menu; ?>
 						</div>
 					<?php endforeach; ?>
 				</div>
 				<p class="mt-10 border-t border-white/10 pt-6 text-sm text-white/60">&copy; <?php echo esc_html( (string) $year ); ?> <?php echo esc_html( (string) ( $org['legal_name'] ?? 'Stichting Rucphen RTV' ) ); ?>.
-					<?php if ( ! empty( $org['anbi'] ) ) : ?> <?php esc_html_e( 'ANBI: ja.', 'radio-rucphen' ); ?><?php endif; ?>
-					<?php if ( ! empty( $org['kvk'] ) ) : ?> KvK: <?php echo esc_html( (string) $org['kvk'] ); ?>.<?php endif; ?>
-					<?php if ( ! empty( $org['rsin'] ) ) : ?> RSIN: <?php echo esc_html( (string) $org['rsin'] ); ?>.<?php endif; ?>
+					<?php
+					if ( ! empty( $org['anbi'] ) ) :
+						?>
+						<?php esc_html_e( 'ANBI: ja.', 'radio-rucphen' ); ?><?php endif; ?>
+					<?php
+					if ( ! empty( $org['kvk'] ) ) :
+						?>
+						KvK: <?php echo esc_html( (string) $org['kvk'] ); ?>.<?php endif; ?>
+					<?php
+					if ( ! empty( $org['rsin'] ) ) :
+						?>
+						RSIN: <?php echo esc_html( (string) $org['rsin'] ); ?>.<?php endif; ?>
 				</p>
 			</div>
 		</footer>
@@ -1052,6 +1393,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render live hero.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_live_hero(): string {
 		$station = Settings::get( Settings::OPTION_STATION );
 		$hero_bg = self::theme_img( 'hero/rucphen-live-background.jpg' );
@@ -1092,18 +1438,23 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Current program.
+	 *
+	 * @return array Return value.
+	 */
 	private static function current_program(): array {
 		$now    = current_datetime();
 		$day_en = strtolower( $now->format( 'l' ) );
 		$hhmm   = $now->format( 'H:i' );
 
 		$programs = get_posts(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
 		foreach ( $programs as $program ) {
@@ -1121,24 +1472,40 @@ final class Blocks {
 					continue;
 				}
 
-				return [
+				return array(
 					'title'    => get_the_title( $program ),
 					'subtitle' => sprintf( '%s %s tot %s uur', self::day_label( $day_en ), $start, $end ),
-				];
+				);
 			}
 		}
 
-		return [];
+		return array();
 	}
 
+	/**
+	 * Day label.
+	 *
+	 * @param string $en En.
+	 * @return string Return value.
+	 */
 	private static function day_label( string $en ): string {
-		$labels = [
-			'monday' => 'Maandag', 'tuesday' => 'Dinsdag', 'wednesday' => 'Woensdag',
-			'thursday' => 'Donderdag', 'friday' => 'Vrijdag', 'saturday' => 'Zaterdag', 'sunday' => 'Zondag',
-		];
+		$labels = array(
+			'monday'    => 'Maandag',
+			'tuesday'   => 'Dinsdag',
+			'wednesday' => 'Woensdag',
+			'thursday'  => 'Donderdag',
+			'friday'    => 'Vrijdag',
+			'saturday'  => 'Zaterdag',
+			'sunday'    => 'Zondag',
+		);
 		return $labels[ $en ] ?? ucfirst( $en );
 	}
 
+	/**
+	 * Render sticky player.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_sticky_player(): string {
 		$station = Settings::get( Settings::OPTION_STATION );
 		$contact = Settings::get( Settings::OPTION_CONTACT );
@@ -1178,35 +1545,50 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render featured programs.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_featured_programs(): string {
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'post_status'    => 'publish',
 				'posts_per_page' => 4,
-				'meta_query'     => [ [ 'key' => '_rucphen_program_featured', 'value' => '1' ] ],
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Intentional meta query for theme content filtering or ordering.
+				'meta_query'     => array(
+					array(
+						'key'   => '_rucphen_program_featured',
+						'value' => '1',
+					),
+				),
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional meta query for theme content filtering or ordering.
 				'meta_key'       => '_rucphen_program_default_start',
 				'orderby'        => 'meta_value',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
 		ob_start();
 		?>
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<?php echo self::section_head(
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
+				echo self::section_head(
 					__( 'Uitgelicht', 'radio-rucphen' ),
 					__( 'Vier programma\'s die deze week extra aandacht krijgen.', 'radio-rucphen' ),
 					__( 'Alle programma\'s', 'radio-rucphen' ),
-					get_post_type_archive_link( PostTypes::PROGRAM ) ?: '#'
-				); ?>
+					get_post_type_archive_link( PostTypes::PROGRAM ) ? get_post_type_archive_link( PostTypes::PROGRAM ) : '#'
+				);
+				?>
 				<div class="grid grid-cols-[2fr_1fr] grid-rows-[repeat(3,150px)] gap-4 max-[767px]:grid-cols-1 max-[767px]:grid-rows-none">
 					<?php
 					$idx = 0;
 					foreach ( $query->posts as $post ) :
-						$is_large   = $idx === 0;
+						$is_large   = 0 === $idx;
 						$cover      = self::program_cover( $post );
 						$presenters = self::program_presenters( $post );
 						$label      = self::program_broadcast_label( $post );
@@ -1215,17 +1597,17 @@ final class Blocks {
 							<img class="h-full w-full object-cover transition duration-[220ms] group-hover:scale-[1.035]" src="<?php echo esc_url( $cover ); ?>" loading="<?php echo $is_large ? 'eager' : 'lazy'; ?>" alt="">
 							<span class="absolute inset-0 bg-[linear-gradient(0deg,rgb(0_24_65_/_0.84),rgb(0_24_65_/_0.08)_62%)]" aria-hidden="true"></span>
 							<span class="absolute inset-x-4 bottom-4 grid gap-[0.35rem] text-white">
-								<?php if ( $label !== '' ) : ?>
+								<?php if ( '' !== $label ) : ?>
 									<span class="inline-flex min-h-[28px] w-full items-center rounded-full bg-accent px-[0.72rem] py-[0.22rem] text-[0.72rem] font-extrabold uppercase text-brand"><?php echo esc_html( $label ); ?></span>
 								<?php endif; ?>
 								<strong class="max-w-[760px] font-display <?php echo $is_large ? 'text-[2.45rem] max-[767px]:text-[2rem]' : 'text-[1.08rem] max-[767px]:text-xl'; ?> font-extrabold leading-[1.08]"><?php echo esc_html( get_the_title( $post ) ); ?></strong>
-								<?php if ( $presenters !== '' ) : ?>
+								<?php if ( '' !== $presenters ) : ?>
 									<span><?php echo esc_html( $presenters ); ?></span>
 								<?php endif; ?>
 							</span>
 						</a>
 						<?php
-						$idx++;
+						++$idx;
 					endforeach;
 					?>
 				</div>
@@ -1235,6 +1617,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render recent podcasts.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_recent_podcasts(): string {
 		$query = self::podcast_query( 4 );
 
@@ -1242,19 +1629,25 @@ final class Blocks {
 		?>
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<?php echo self::section_head(
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
+				echo self::section_head(
 					__( 'Gemiste uitzendingen', 'radio-rucphen' ),
 					__( 'Luister recente uitzendingen terug wanneer het jou uitkomt.', 'radio-rucphen' ),
 					__( 'Naar alle gemist', 'radio-rucphen' ),
-					get_post_type_archive_link( PostTypes::PODCAST ) ?: home_url( '/podcasts/' )
-				); ?>
+					get_post_type_archive_link( PostTypes::PODCAST ) ? get_post_type_archive_link( PostTypes::PODCAST ) : home_url( '/podcasts/' )
+				);
+				?>
 				<div class="grid grid-cols-4 gap-5 max-[1023px]:grid-cols-2 max-[767px]:grid-cols-1">
-					<?php foreach ( $query->posts as $podcast ) :
+					<?php
+					foreach ( $query->posts as $podcast ) :
 						if ( ! $podcast instanceof \WP_Post ) {
 							continue;
 						}
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
 						echo self::podcast_card( $podcast );
-					endforeach; ?>
+					endforeach;
+					?>
 				</div>
 			</div>
 		</section>
@@ -1262,17 +1655,22 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render program single.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_program_single(): string {
 		$program = get_queried_object();
-		if ( ! $program instanceof \WP_Post || $program->post_type !== PostTypes::PROGRAM ) {
+		if ( ! $program instanceof \WP_Post || PostTypes::PROGRAM !== $program->post_type ) {
 			return '';
 		}
 
-		$presenters      = self::program_presenter_posts( $program );
-		$broadcast       = self::program_broadcast_label( $program );
-		$short           = self::program_short_description( $program );
-		$long            = trim( (string) get_post_meta( $program->ID, '_rucphen_program_long_description', true ) );
-		if ( $long === '' ) {
+		$presenters = self::program_presenter_posts( $program );
+		$broadcast  = self::program_broadcast_label( $program );
+		$short      = self::program_short_description( $program );
+		$long       = trim( (string) get_post_meta( $program->ID, '_rucphen_program_long_description', true ) );
+		if ( '' === $long ) {
 			$long = $program->post_content;
 		}
 		$wa_url = self::whatsapp_url();
@@ -1284,7 +1682,7 @@ final class Blocks {
 				<nav class="mb-6 flex flex-wrap items-center gap-2 text-sm font-bold text-ink-soft" aria-label="<?php esc_attr_e( 'Kruimelpad', 'radio-rucphen' ); ?>">
 					<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'radio-rucphen' ); ?></a>
 					<span aria-hidden="true">&rsaquo;</span>
-					<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PROGRAM ) ?: home_url( '/programma/' ) ); ?>"><?php esc_html_e( 'Programma', 'radio-rucphen' ); ?></a>
+					<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PROGRAM ) ? get_post_type_archive_link( PostTypes::PROGRAM ) : home_url( '/programma/' ) ); ?>"><?php esc_html_e( 'Programma', 'radio-rucphen' ); ?></a>
 					<span aria-hidden="true">&rsaquo;</span>
 					<span><?php echo esc_html( get_the_title( $program ) ); ?></span>
 				</nav>
@@ -1293,10 +1691,10 @@ final class Blocks {
 					<div class="order-2 max-[767px]:order-auto">
 						<p class="mb-[0.8rem] inline-flex items-center rounded-full bg-accent px-[0.72rem] py-[0.28rem] text-[0.78rem] font-black uppercase text-brand"><?php esc_html_e( 'Programma', 'radio-rucphen' ); ?></p>
 						<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08] text-ink"><?php echo esc_html( get_the_title( $program ) ); ?></h1>
-						<?php if ( $broadcast !== '' ) : ?>
+						<?php if ( '' !== $broadcast ) : ?>
 							<p class="mt-3 text-[1.05rem] font-extrabold text-brand"><?php echo esc_html( $broadcast ); ?></p>
 						<?php endif; ?>
-						<?php if ( $short !== '' ) : ?>
+						<?php if ( '' !== $short ) : ?>
 							<p class="mt-5 max-w-[720px] text-[1.14rem] leading-7 text-ink-soft"><?php echo esc_html( $short ); ?></p>
 						<?php endif; ?>
 						<div class="mt-6 flex flex-wrap gap-3">
@@ -1308,7 +1706,7 @@ final class Blocks {
 							<h2 class="font-display text-2xl font-extrabold leading-tight text-ink"><?php esc_html_e( 'Over het programma', 'radio-rucphen' ); ?></h2>
 							<div class="mt-4 grid gap-4 text-ink-soft">
 								<?php echo wp_kses_post( wpautop( $long ) ); ?>
-								<?php if ( $short !== '' && ! str_contains( wp_strip_all_tags( $long ), $short ) ) : ?>
+								<?php if ( '' !== $short && ! str_contains( wp_strip_all_tags( $long ), $short ) ) : ?>
 									<p><?php echo esc_html( $short ); ?></p>
 								<?php endif; ?>
 							</div>
@@ -1317,9 +1715,9 @@ final class Blocks {
 
 					<aside class="order-1 grid content-start gap-5 max-[767px]:order-auto">
 						<img class="aspect-[4/3] w-full rounded-card bg-[#eef3f8] object-cover shadow-sm" src="<?php echo esc_url( self::program_cover( $program ) ); ?>" alt="<?php echo esc_attr( get_the_title( $program ) ); ?>">
-						<?php if ( $presenters !== [] ) : ?>
+						<?php if ( array() !== $presenters ) : ?>
 							<div class="rounded-card border border-line bg-white p-5 shadow-sm">
-								<h2 class="font-display text-xl font-extrabold text-ink"><?php echo count( $presenters ) === 1 ? esc_html__( 'Presentator', 'radio-rucphen' ) : esc_html__( 'Presentatoren', 'radio-rucphen' ); ?></h2>
+									<h2 class="font-display text-xl font-extrabold text-ink"><?php echo 1 === count( $presenters ) ? esc_html__( 'Presentator', 'radio-rucphen' ) : esc_html__( 'Presentatoren', 'radio-rucphen' ); ?></h2>
 								<div class="mt-4 grid gap-3">
 									<?php foreach ( $presenters as $presenter ) : ?>
 										<a class="grid grid-cols-[58px_minmax(0,1fr)] items-center gap-3 text-ink no-underline hover:text-brand" href="<?php echo esc_url( get_permalink( $presenter ) ); ?>">
@@ -1327,7 +1725,10 @@ final class Blocks {
 											<span>
 												<strong class="block font-display text-lg font-extrabold"><?php echo esc_html( get_the_title( $presenter ) ); ?></strong>
 												<?php $tagline = (string) get_post_meta( $presenter->ID, '_rucphen_presenter_tagline', true ); ?>
-												<?php if ( $tagline !== '' ) : ?><span class="text-sm text-ink-soft"><?php echo esc_html( $tagline ); ?></span><?php endif; ?>
+												<?php
+												if ( '' !== $tagline ) :
+													?>
+													<span class="text-sm text-ink-soft"><?php echo esc_html( $tagline ); ?></span><?php endif; ?>
 											</span>
 										</a>
 									<?php endforeach; ?>
@@ -1336,8 +1737,8 @@ final class Blocks {
 						<?php endif; ?>
 						<div class="rounded-card border border-line bg-white p-5 shadow-sm">
 							<h2 class="font-display text-xl font-extrabold text-ink"><?php esc_html_e( 'Uitzendingen', 'radio-rucphen' ); ?></h2>
-							<p class="mt-3 text-ink-soft"><?php echo esc_html( $broadcast !== '' ? $broadcast : __( 'Uitzendtijden volgen binnenkort.', 'radio-rucphen' ) ); ?></p>
-							<a class="mt-4 inline-flex min-h-10 items-center rounded-sm border border-[#c9d7ec] bg-white px-4 py-2 text-sm font-extrabold text-brand no-underline hover:bg-[#e9eef7]" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PROGRAM ) ?: home_url( '/programma/' ) ); ?>"><?php esc_html_e( 'Bekijk de gids', 'radio-rucphen' ); ?></a>
+							<p class="mt-3 text-ink-soft"><?php echo esc_html( '' !== $broadcast ? $broadcast : __( 'Uitzendtijden volgen binnenkort.', 'radio-rucphen' ) ); ?></p>
+								<a class="mt-4 inline-flex min-h-10 items-center rounded-sm border border-[#c9d7ec] bg-white px-4 py-2 text-sm font-extrabold text-brand no-underline hover:bg-[#e9eef7]" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PROGRAM ) ? get_post_type_archive_link( PostTypes::PROGRAM ) : home_url( '/programma/' ) ); ?>"><?php esc_html_e( 'Bekijk de gids', 'radio-rucphen' ); ?></a>
 						</div>
 					</aside>
 				</div>
@@ -1347,17 +1748,23 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render presenter archive.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_presenter_archive(): string {
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::PRESENTER,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional meta query for theme content filtering or ordering.
 				'meta_key'       => '_rucphen_presenter_order',
 				'orderby'        => 'meta_value_num',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
 		ob_start();
@@ -1365,7 +1772,8 @@ final class Blocks {
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="grid grid-cols-4 gap-5 max-[1023px]:grid-cols-2 max-[767px]:grid-cols-1">
-					<?php foreach ( $query->posts as $presenter ) :
+					<?php
+					foreach ( $query->posts as $presenter ) :
 						if ( ! $presenter instanceof \WP_Post ) {
 							continue;
 						}
@@ -1376,7 +1784,7 @@ final class Blocks {
 								<img class="aspect-square w-full bg-[#eef3f8] object-cover" src="<?php echo esc_url( self::presenter_cover( $presenter ) ); ?>" loading="lazy" alt="<?php echo esc_attr( get_the_title( $presenter ) ); ?>">
 								<span class="grid gap-2 p-4">
 									<strong class="font-display text-[1.18rem] font-extrabold leading-[1.12] text-ink"><?php echo esc_html( get_the_title( $presenter ) ); ?></strong>
-									<?php if ( $tagline !== '' ) : ?>
+									<?php if ( '' !== $tagline ) : ?>
 										<span class="text-ink-soft"><?php echo esc_html( $tagline ); ?></span>
 									<?php endif; ?>
 								</span>
@@ -1390,9 +1798,14 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render presenter single.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_presenter_single(): string {
 		$presenter = get_queried_object();
-		if ( ! $presenter instanceof \WP_Post || $presenter->post_type !== PostTypes::PRESENTER ) {
+		if ( ! $presenter instanceof \WP_Post || PostTypes::PRESENTER !== $presenter->post_type ) {
 			return '';
 		}
 
@@ -1406,7 +1819,7 @@ final class Blocks {
 				<nav class="mb-6 flex flex-wrap items-center gap-2 text-sm font-bold text-ink-soft" aria-label="<?php esc_attr_e( 'Kruimelpad', 'radio-rucphen' ); ?>">
 					<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'radio-rucphen' ); ?></a>
 					<span aria-hidden="true">&rsaquo;</span>
-					<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PRESENTER ) ?: home_url( '/djs/' ) ); ?>"><?php esc_html_e( 'DJ\'s', 'radio-rucphen' ); ?></a>
+						<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PRESENTER ) ? get_post_type_archive_link( PostTypes::PRESENTER ) : home_url( '/djs/' ) ); ?>"><?php esc_html_e( 'DJ\'s', 'radio-rucphen' ); ?></a>
 					<span aria-hidden="true">&rsaquo;</span>
 					<span><?php echo esc_html( get_the_title( $presenter ) ); ?></span>
 				</nav>
@@ -1415,19 +1828,26 @@ final class Blocks {
 					<div class="order-2 max-[767px]:order-auto">
 						<p class="mb-[0.8rem] inline-flex items-center rounded-full bg-accent px-[0.72rem] py-[0.28rem] text-[0.78rem] font-black uppercase text-brand"><?php esc_html_e( 'Presentator', 'radio-rucphen' ); ?></p>
 						<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08] text-ink"><?php echo esc_html( get_the_title( $presenter ) ); ?></h1>
-						<?php if ( $tagline !== '' ) : ?>
+						<?php if ( '' !== $tagline ) : ?>
 							<p class="mt-3 text-[1.12rem] font-extrabold text-brand"><?php echo esc_html( $tagline ); ?></p>
 						<?php endif; ?>
-						<a class="mt-6 inline-flex min-h-11 items-center rounded-sm border border-[#c9d7ec] bg-white px-4 py-2 font-extrabold text-brand no-underline hover:bg-[#e9eef7]" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PROGRAM ) ?: home_url( '/programma/' ) ); ?>"><?php esc_html_e( 'Bekijk de gids', 'radio-rucphen' ); ?></a>
+						<a class="mt-6 inline-flex min-h-11 items-center rounded-sm border border-[#c9d7ec] bg-white px-4 py-2 font-extrabold text-brand no-underline hover:bg-[#e9eef7]" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PROGRAM ) ? get_post_type_archive_link( PostTypes::PROGRAM ) : home_url( '/programma/' ) ); ?>"><?php esc_html_e( 'Bekijk de gids', 'radio-rucphen' ); ?></a>
 
 						<section class="mt-10">
 							<h2 class="font-display text-2xl font-extrabold leading-tight text-ink"><?php esc_html_e( 'Bio', 'radio-rucphen' ); ?></h2>
 							<div class="mt-4 grid gap-4 text-ink-soft"><?php echo wp_kses_post( wpautop( $presenter->post_content ) ); ?></div>
 						</section>
 
-						<?php if ( $programs !== [] ) : ?>
-							<section class="mt-10">
-								<h2 class="font-display text-2xl font-extrabold leading-tight text-ink"><?php printf( esc_html__( 'Programma\'s van %s', 'radio-rucphen' ), esc_html( get_the_title( $presenter ) ) ); ?></h2>
+							<?php if ( array() !== $programs ) : ?>
+								<?php
+								$programs_heading = sprintf(
+									/* translators: %s: presenter name. */
+									__( 'Programma\'s van %s', 'radio-rucphen' ),
+									get_the_title( $presenter )
+								);
+								?>
+								<section class="mt-10">
+									<h2 class="font-display text-2xl font-extrabold leading-tight text-ink"><?php echo esc_html( $programs_heading ); ?></h2>
 								<div class="mt-4 grid gap-3">
 									<?php foreach ( $programs as $program ) : ?>
 										<a class="grid grid-cols-[145px_minmax(0,1fr)] gap-4 rounded-card border border-line bg-white p-4 text-ink no-underline hover:border-[#bfdbfe] hover:shadow-sm max-[767px]:grid-cols-1" href="<?php echo esc_url( get_permalink( $program ) ); ?>">
@@ -1453,6 +1873,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render podcast archive.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_podcast_archive(): string {
 		$query    = self::podcast_query( -1 );
 		$programs = self::podcast_program_options( $query->posts );
@@ -1468,12 +1893,15 @@ final class Blocks {
 					<?php endforeach; ?>
 				</nav>
 				<div class="grid gap-4">
-					<?php foreach ( $query->posts as $podcast ) :
+					<?php
+					foreach ( $query->posts as $podcast ) :
 						if ( ! $podcast instanceof \WP_Post ) {
 							continue;
 						}
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
 						echo self::podcast_row( $podcast );
-					endforeach; ?>
+					endforeach;
+					?>
 				</div>
 			</div>
 		</section>
@@ -1481,17 +1909,22 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render podcast single.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_podcast_single(): string {
 		$podcast = get_queried_object();
 		if ( ! $podcast instanceof \WP_Post ) {
 			return '';
 		}
 
-		$program = self::podcast_program( $podcast );
+		$program    = self::podcast_program( $podcast );
 		$presenters = $program instanceof \WP_Post ? self::program_presenters( $program ) : '';
-		$meta_parts = array_filter( [ $presenters, self::podcast_meta_label( $podcast ) ] );
-		$audio_url = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_audio_url', true );
-		$tracks = Meta::sanitize_podcast_tracks( get_post_meta( $podcast->ID, '_rucphen_podcast_tracks', true ) );
+		$meta_parts = array_filter( array( $presenters, self::podcast_meta_label( $podcast ) ) );
+		$audio_url  = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_audio_url', true );
+		$tracks     = Meta::sanitize_podcast_tracks( get_post_meta( $podcast->ID, '_rucphen_podcast_tracks', true ) );
 
 		ob_start();
 		?>
@@ -1500,16 +1933,16 @@ final class Blocks {
 				<nav class="mb-6 flex flex-wrap items-center gap-2 text-sm font-bold text-ink-soft" aria-label="<?php esc_attr_e( 'Kruimelpad', 'radio-rucphen' ); ?>">
 					<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'radio-rucphen' ); ?></a>
 					<span aria-hidden="true">&rsaquo;</span>
-					<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PODCAST ) ?: home_url( '/podcasts/' ) ); ?>"><?php esc_html_e( 'Podcasts', 'radio-rucphen' ); ?></a>
+						<a class="text-brand no-underline hover:underline" href="<?php echo esc_url( get_post_type_archive_link( PostTypes::PODCAST ) ? get_post_type_archive_link( PostTypes::PODCAST ) : home_url( '/podcasts/' ) ); ?>"><?php esc_html_e( 'Podcasts', 'radio-rucphen' ); ?></a>
 					<span aria-hidden="true">&rsaquo;</span>
 					<span><?php echo esc_html( get_the_title( $podcast ) ); ?></span>
 				</nav>
 				<h1 class="m-0 font-display text-[clamp(2.1rem,1.85rem_+_1.5vw,3.8rem)] font-extrabold leading-[1.08] text-ink"><?php echo esc_html( get_the_title( $podcast ) ); ?></h1>
-				<?php if ( $meta_parts !== [] ) : ?>
+				<?php if ( array() !== $meta_parts ) : ?>
 					<p class="mt-3 text-[1rem] font-bold text-ink-soft"><?php echo esc_html( implode( ' · ', $meta_parts ) ); ?></p>
 				<?php endif; ?>
 
-				<?php if ( $audio_url !== '' ) : ?>
+				<?php if ( '' !== $audio_url ) : ?>
 					<div class="mt-6 rounded-card border border-line bg-white p-5 shadow-sm">
 						<p class="mb-3 text-sm font-bold text-ink-soft"><?php esc_html_e( 'Je pauzeert hiermee de live-uitzending.', 'radio-rucphen' ); ?></p>
 						<audio class="w-full" controls preload="metadata" src="<?php echo esc_url( $audio_url ); ?>" data-podcast-audio></audio>
@@ -1521,7 +1954,7 @@ final class Blocks {
 					<?php echo wp_kses_post( wpautop( $podcast->post_content ) ); ?>
 				</div>
 
-				<?php if ( $tracks !== [] ) : ?>
+				<?php if ( array() !== $tracks ) : ?>
 					<section class="mt-8">
 						<h2 class="font-display text-2xl font-extrabold text-ink"><?php esc_html_e( 'Tracks in deze uitzending', 'radio-rucphen' ); ?></h2>
 						<ul class="mt-4 grid gap-2">
@@ -1540,20 +1973,33 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Podcast query.
+	 *
+	 * @param int $limit Limit.
+	 * @return \WP_Query Return value.
+	 */
 	private static function podcast_query( int $limit ): \WP_Query {
 		return new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::PODCAST,
 				'post_status'    => 'publish',
 				'posts_per_page' => $limit,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional meta query for theme content filtering or ordering.
 				'meta_key'       => '_rucphen_podcast_date',
 				'orderby'        => 'meta_value',
 				'order'          => 'DESC',
 				'no_found_rows'  => $limit > 0,
-			]
+			)
 		);
 	}
 
+	/**
+	 * Podcast card.
+	 *
+	 * @param \WP_Post $podcast Podcast.
+	 * @return string Return value.
+	 */
 	private static function podcast_card( \WP_Post $podcast ): string {
 		ob_start();
 		?>
@@ -1571,6 +2017,12 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Podcast row.
+	 *
+	 * @param \WP_Post $podcast Podcast.
+	 * @return string Return value.
+	 */
 	private static function podcast_row( \WP_Post $podcast ): string {
 		$slug = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_program_slug', true );
 
@@ -1590,18 +2042,20 @@ final class Blocks {
 	}
 
 	/**
-	 * @param array<int, mixed> $podcasts
-	 * @return array<string, string>
+	 * Podcast program options.
+	 *
+	 * @param array $podcasts Podcasts.
+	 * @return array Return value.
 	 */
 	private static function podcast_program_options( array $podcasts ): array {
-		$options = [];
+		$options = array();
 		foreach ( $podcasts as $podcast ) {
 			if ( ! $podcast instanceof \WP_Post ) {
 				continue;
 			}
-			$slug = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_program_slug', true );
+			$slug    = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_program_slug', true );
 			$program = self::podcast_program( $podcast );
-			if ( $slug !== '' && $program instanceof \WP_Post ) {
+			if ( '' !== $slug && $program instanceof \WP_Post ) {
 				$options[ $slug ] = get_the_title( $program );
 			}
 		}
@@ -1609,31 +2063,43 @@ final class Blocks {
 		return $options;
 	}
 
+	/**
+	 * Podcast program.
+	 *
+	 * @param \WP_Post $podcast Podcast.
+	 * @return ?\WP_Post Return value.
+	 */
 	private static function podcast_program( \WP_Post $podcast ): ?\WP_Post {
 		$program_id = (int) get_post_meta( $podcast->ID, '_rucphen_podcast_program_id', true );
-		$program = $program_id > 0 ? get_post( $program_id ) : null;
-		if ( $program instanceof \WP_Post && $program->post_type === PostTypes::PROGRAM ) {
+		$program    = $program_id > 0 ? get_post( $program_id ) : null;
+		if ( $program instanceof \WP_Post && PostTypes::PROGRAM === $program->post_type ) {
 			return $program;
 		}
 
 		$slug = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_program_slug', true );
-		if ( $slug === '' ) {
+		if ( '' === $slug ) {
 			return null;
 		}
 
 		$posts = get_posts(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'name'           => $slug,
 				'post_status'    => 'publish',
 				'posts_per_page' => 1,
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
 		return $posts[0] ?? null;
 	}
 
+	/**
+	 * Podcast cover.
+	 *
+	 * @param \WP_Post $podcast Podcast.
+	 * @return string Return value.
+	 */
 	private static function podcast_cover( \WP_Post $podcast ): string {
 		if ( has_post_thumbnail( $podcast ) ) {
 			return (string) get_the_post_thumbnail_url( $podcast, 'rucphen-card' );
@@ -1645,49 +2111,76 @@ final class Blocks {
 		}
 
 		$slug = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_program_slug', true );
-		return $slug !== '' ? self::theme_img( 'programs/' . $slug . '.jpg' ) : self::theme_img( 'programs/wakker-met-rucphen.jpg' );
+		return '' !== $slug ? self::theme_img( 'programs/' . $slug . '.jpg' ) : self::theme_img( 'programs/wakker-met-rucphen.jpg' );
 	}
 
+	/**
+	 * Podcast description.
+	 *
+	 * @param \WP_Post $podcast Podcast.
+	 * @return string Return value.
+	 */
 	private static function podcast_description( \WP_Post $podcast ): string {
 		$program = self::podcast_program( $podcast );
 		if ( $program instanceof \WP_Post ) {
 			$short = self::program_short_description( $program );
-			if ( $short !== '' ) {
+			if ( '' !== $short ) {
 				return $short;
 			}
 		}
 
-		$text = $podcast->post_excerpt !== '' ? $podcast->post_excerpt : $podcast->post_content;
+		$text = '' !== $podcast->post_excerpt ? $podcast->post_excerpt : $podcast->post_content;
 		return trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $text ) ) ?? '' );
 	}
 
+	/**
+	 * Podcast meta label.
+	 *
+	 * @param \WP_Post $podcast Podcast.
+	 * @return string Return value.
+	 */
 	private static function podcast_meta_label( \WP_Post $podcast ): string {
-		$date = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_date', true );
-		$ts = $date !== '' ? strtotime( $date ) : strtotime( $podcast->post_date );
-		$pretty = $ts ? wp_date( 'j F Y', $ts ) : '';
+		$date     = (string) get_post_meta( $podcast->ID, '_rucphen_podcast_date', true );
+		$ts       = '' !== $date ? strtotime( $date ) : strtotime( $podcast->post_date );
+		$pretty   = $ts ? wp_date( 'j F Y', $ts ) : '';
 		$duration = self::podcast_duration_label( (int) get_post_meta( $podcast->ID, '_rucphen_podcast_duration_seconds', true ) );
 
-		return trim( $pretty . ( $pretty !== '' && $duration !== '' ? ' · ' : '' ) . $duration );
+		return trim( $pretty . ( '' !== $pretty && '' !== $duration ? ' · ' : '' ) . $duration );
 	}
 
+	/**
+	 * Podcast duration label.
+	 *
+	 * @param int $seconds Seconds.
+	 * @return string Return value.
+	 */
 	private static function podcast_duration_label( int $seconds ): string {
 		if ( $seconds <= 0 ) {
 			return '';
 		}
-		$hours = intdiv( $seconds, HOUR_IN_SECONDS );
+		$hours   = intdiv( $seconds, HOUR_IN_SECONDS );
 		$minutes = intdiv( $seconds % HOUR_IN_SECONDS, MINUTE_IN_SECONDS );
 
-		if ( $hours > 0 && $minutes === 0 ) {
+		if ( $hours > 0 && 0 === $minutes ) {
+			// translators: %d: number of hours.
 			return sprintf( _n( '%d uur', '%d uur', $hours, 'radio-rucphen' ), $hours );
 		}
 		if ( $hours > 0 ) {
+			// translators: 1: number of hours, 2: number of minutes.
 			return sprintf( __( '%1$d uur %2$d min', 'radio-rucphen' ), $hours, $minutes );
 		}
-		return sprintf( __( '%d min', 'radio-rucphen' ), max( 1, $minutes ) );
+			// translators: %d: number of minutes.
+			return sprintf( __( '%d min', 'radio-rucphen' ), max( 1, $minutes ) );
 	}
 
+	/**
+	 * Program presenters.
+	 *
+	 * @param \WP_Post $program Program.
+	 * @return string Return value.
+	 */
 	private static function program_presenters( \WP_Post $program ): string {
-		$names = [];
+		$names = array();
 		foreach ( self::program_presenter_posts( $program ) as $p ) {
 			$names[ $p->ID ] = get_the_title( $p );
 		}
@@ -1696,14 +2189,17 @@ final class Blocks {
 	}
 
 	/**
-	 * @return array<int, \WP_Post>
+	 * Program presenter posts.
+	 *
+	 * @param \WP_Post $program Program.
+	 * @return array Return value.
 	 */
 	private static function program_presenter_posts( \WP_Post $program ): array {
-		$ids = array_map( 'intval', (array) get_post_meta( $program->ID, '_rucphen_program_presenter_ids', true ) );
-		$posts = [];
+		$ids   = array_map( 'intval', (array) get_post_meta( $program->ID, '_rucphen_program_presenter_ids', true ) );
+		$posts = array();
 		foreach ( $ids as $pid ) {
 			$p = get_post( $pid );
-			if ( $p instanceof \WP_Post && $p->post_type === PostTypes::PRESENTER ) {
+			if ( $p instanceof \WP_Post && PostTypes::PRESENTER === $p->post_type ) {
 				$posts[ $p->ID ] = $p;
 			}
 		}
@@ -1712,62 +2208,77 @@ final class Blocks {
 	}
 
 	/**
-	 * @return array<int, \WP_Post>
+	 * Presenter programs.
+	 *
+	 * @param \WP_Post $presenter Presenter.
+	 * @return array Return value.
 	 */
 	private static function presenter_programs( \WP_Post $presenter ): array {
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-				'meta_query'     => [
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Intentional meta query for theme content filtering or ordering.
+				'meta_query'     => array(
 					'relation' => 'OR',
-					[
+					array(
 						'key'     => '_rucphen_program_presenter_ids',
 						'value'   => 'i:' . $presenter->ID . ';',
 						'compare' => 'LIKE',
-					],
-					[
+					),
+					array(
 						'key'     => '_rucphen_program_presenter_ids',
 						'value'   => '"' . $presenter->ID . '"',
 						'compare' => 'LIKE',
-					],
-				],
-			]
+					),
+				),
+			)
 		);
 
 		return array_values( array_filter( $query->posts, static fn( $post ): bool => $post instanceof \WP_Post ) );
 	}
 
+	/**
+	 * Whatsapp url.
+	 *
+	 * @param string $text Text.
+	 * @return string Return value.
+	 */
 	private static function whatsapp_url( string $text = '' ): string {
 		$contact = Settings::get( Settings::OPTION_CONTACT );
 		$number  = preg_replace( '/\D+/', '', (string) ( $contact['whatsapp_number'] ?? '' ) );
-		if ( $number === '' ) {
+		if ( '' === $number ) {
 			$number = '31600000000';
 		}
 
-		if ( $text === '' ) {
+		if ( '' === $text ) {
 			$text = (string) ( $contact['whatsapp_default_text'] ?? '' );
 		}
 
 		return 'https://wa.me/' . $number . '?text=' . rawurlencode( $text );
 	}
 
+	/**
+	 * Render program archive.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_program_archive(): string {
-		$days = [
-			'monday'    => [ __( 'Maandag', 'radio-rucphen' ), __( 'Ma', 'radio-rucphen' ) ],
-			'tuesday'   => [ __( 'Dinsdag', 'radio-rucphen' ), __( 'Di', 'radio-rucphen' ) ],
-			'wednesday' => [ __( 'Woensdag', 'radio-rucphen' ), __( 'Wo', 'radio-rucphen' ) ],
-			'thursday'  => [ __( 'Donderdag', 'radio-rucphen' ), __( 'Do', 'radio-rucphen' ) ],
-			'friday'    => [ __( 'Vrijdag', 'radio-rucphen' ), __( 'Vr', 'radio-rucphen' ) ],
-			'saturday'  => [ __( 'Zaterdag', 'radio-rucphen' ), __( 'Za', 'radio-rucphen' ) ],
-			'sunday'    => [ __( 'Zondag', 'radio-rucphen' ), __( 'Zo', 'radio-rucphen' ) ],
-		];
+		$days = array(
+			'monday'    => array( __( 'Maandag', 'radio-rucphen' ), __( 'Ma', 'radio-rucphen' ) ),
+			'tuesday'   => array( __( 'Dinsdag', 'radio-rucphen' ), __( 'Di', 'radio-rucphen' ) ),
+			'wednesday' => array( __( 'Woensdag', 'radio-rucphen' ), __( 'Wo', 'radio-rucphen' ) ),
+			'thursday'  => array( __( 'Donderdag', 'radio-rucphen' ), __( 'Do', 'radio-rucphen' ) ),
+			'friday'    => array( __( 'Vrijdag', 'radio-rucphen' ), __( 'Vr', 'radio-rucphen' ) ),
+			'saturday'  => array( __( 'Zaterdag', 'radio-rucphen' ), __( 'Za', 'radio-rucphen' ) ),
+			'sunday'    => array( __( 'Zondag', 'radio-rucphen' ), __( 'Zo', 'radio-rucphen' ) ),
+		);
 
-		$day_by_number = [
+		$day_by_number = array(
 			1 => 'monday',
 			2 => 'tuesday',
 			3 => 'wednesday',
@@ -1775,7 +2286,7 @@ final class Blocks {
 			5 => 'friday',
 			6 => 'saturday',
 			7 => 'sunday',
-		];
+		);
 		$today         = $day_by_number[ (int) wp_date( 'N' ) ] ?? 'monday';
 		$by_day        = self::programs_grouped_by_airtime_day();
 
@@ -1830,9 +2341,17 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Is airtime live.
+	 *
+	 * @param string $day Day.
+	 * @param string $start Start.
+	 * @param string $end End.
+	 * @return bool Return value.
+	 */
 	private static function is_airtime_live( string $day, string $start, string $end ): bool {
 		$day_index = self::airtime_day_index( $day );
-		if ( $day_index === 0 ) {
+		if ( 0 === $day_index ) {
 			return false;
 		}
 
@@ -1846,7 +2365,7 @@ final class Blocks {
 		$now   = ( (int) wp_date( 'G' ) * 60 ) + (int) wp_date( 'i' );
 
 		if ( $end_minutes <= $start_minutes ) {
-			$next_day = $day_index === 7 ? 1 : $day_index + 1;
+			$next_day = 7 === $day_index ? 1 : $day_index + 1;
 			return ( $today === $day_index && $now >= $start_minutes )
 				|| ( $today === $next_day && $now < $end_minutes );
 		}
@@ -1854,8 +2373,14 @@ final class Blocks {
 		return $today === $day_index && $now >= $start_minutes && $now < $end_minutes;
 	}
 
+	/**
+	 * Airtime day index.
+	 *
+	 * @param string $day Day.
+	 * @return int Return value.
+	 */
 	private static function airtime_day_index( string $day ): int {
-		return [
+		return array(
 			'monday'    => 1,
 			'tuesday'   => 2,
 			'wednesday' => 3,
@@ -1863,9 +2388,15 @@ final class Blocks {
 			'friday'    => 5,
 			'saturday'  => 6,
 			'sunday'    => 7,
-		][ $day ] ?? 0;
+		)[ $day ] ?? 0;
 	}
 
+	/**
+	 * Airtime minutes.
+	 *
+	 * @param string $time Time.
+	 * @return int Return value.
+	 */
 	private static function airtime_minutes( string $time ): int {
 		if ( ! preg_match( '/^([01]?\d|2[0-3]):([0-5]\d)$/', trim( $time ), $matches ) ) {
 			return -1;
@@ -1874,28 +2405,39 @@ final class Blocks {
 		return ( (int) $matches[1] * 60 ) + (int) $matches[2];
 	}
 
+	/**
+	 * Program short description.
+	 *
+	 * @param \WP_Post $program Program.
+	 * @return string Return value.
+	 */
 	private static function program_short_description( \WP_Post $program ): string {
 		$short = trim( (string) get_post_meta( $program->ID, '_rucphen_program_short_description', true ) );
-		if ( $short === '' ) {
-			$short = $program->post_excerpt !== '' ? $program->post_excerpt : $program->post_content;
+		if ( '' === $short ) {
+			$short = '' !== $program->post_excerpt ? $program->post_excerpt : $program->post_content;
 		}
 
 		return trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $short ) ) ?? '' );
 	}
 
+	/**
+	 * Programs grouped by airtime day.
+	 *
+	 * @return array Return value.
+	 */
 	private static function programs_grouped_by_airtime_day(): array {
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
-		$grouped = [];
+		$grouped = array();
 		foreach ( $query->posts as $program ) {
 			if ( ! $program instanceof \WP_Post ) {
 				continue;
@@ -1903,22 +2445,22 @@ final class Blocks {
 
 			$presenters = self::program_presenters( $program );
 			$short      = self::program_short_description( $program );
-			$meta_parts = [];
-			if ( $presenters !== '' ) {
+			$meta_parts = array();
+			if ( '' !== $presenters ) {
 				$meta_parts[] = $presenters;
 			}
-			if ( $short !== '' ) {
+			if ( '' !== $short ) {
 				$meta_parts[] = $short;
 			}
 
 			foreach ( self::program_airtimes( $program ) as $airtime ) {
-				$grouped[ $airtime['day'] ][] = [
+				$grouped[ $airtime['day'] ][] = array(
 					'start'              => $airtime['start'],
 					'end'                => $airtime['end'],
 					'program_title'      => get_the_title( $program ),
 					'program_url'        => get_permalink( $program ),
 					'program_meta_parts' => $meta_parts,
-				];
+				);
 			}
 		}
 
@@ -1929,26 +2471,32 @@ final class Blocks {
 		return $grouped;
 	}
 
+	/**
+	 * Program broadcast label.
+	 *
+	 * @param \WP_Post $program Program.
+	 * @return string Return value.
+	 */
 	private static function program_broadcast_label( \WP_Post $program ): string {
 		$airtimes = self::program_airtimes( $program );
-		if ( $airtimes === [] ) {
+		if ( array() === $airtimes ) {
 			return '';
 		}
 
-		$grouped = [];
+		$grouped = array();
 		foreach ( $airtimes as $airtime ) {
-			$key = $airtime['start'] . '|' . $airtime['end'];
+			$key               = $airtime['start'] . '|' . $airtime['end'];
 			$grouped[ $key ][] = $airtime['day'];
 		}
 
-		$labels = [];
+		$labels = array();
 		foreach ( $grouped as $time => $days ) {
 			[ $start, $end ] = explode( '|', $time, 2 );
-			$labels[] = self::day_range_label( $days ) . ' ' . $start . ' - ' . $end;
+			$labels[]        = self::day_range_label( $days ) . ' ' . $start . ' - ' . $end;
 		}
 		if ( count( $labels ) > 2 ) {
-			$extra  = count( $labels ) - 2;
-			$labels = array_slice( $labels, 0, 2 );
+			$extra    = count( $labels ) - 2;
+			$labels   = array_slice( $labels, 0, 2 );
 			$labels[] = sprintf( '+%d', $extra );
 		}
 
@@ -1956,16 +2504,19 @@ final class Blocks {
 	}
 
 	/**
-	 * @return array<int, array{day:string,start:string,end:string}>
+	 * Program airtimes.
+	 *
+	 * @param \WP_Post $program Program.
+	 * @return array Return value.
 	 */
 	private static function program_airtimes( \WP_Post $program ): array {
 		$raw = get_post_meta( $program->ID, '_rucphen_program_airtimes', true );
 		if ( ! is_array( $raw ) ) {
-			return [];
+			return array();
 		}
 
-		$order = array_flip( [ 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' ] );
-		$airtimes = [];
+		$order    = array_flip( array( 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday' ) );
+		$airtimes = array();
 		foreach ( $raw as $row ) {
 			if ( ! is_array( $row ) ) {
 				continue;
@@ -1978,23 +2529,33 @@ final class Blocks {
 				continue;
 			}
 
-			$airtimes[] = [
+			$airtimes[] = array(
 				'day'   => $day,
 				'start' => $start,
 				'end'   => $end,
-			];
+			);
 		}
 
 		usort(
 			$airtimes,
-			static fn( $a, $b ) => ( $order[ $a['day'] ] <=> $order[ $b['day'] ] ) ?: strcmp( $a['start'], $b['start'] )
+			static function ( $a, $b ) use ( $order ): int {
+				$day_compare = $order[ $a['day'] ] <=> $order[ $b['day'] ];
+
+				return 0 !== $day_compare ? $day_compare : strcmp( $a['start'], $b['start'] );
+			}
 		);
 
 		return $airtimes;
 	}
 
+	/**
+	 * Day short label.
+	 *
+	 * @param string $en En.
+	 * @return string Return value.
+	 */
 	private static function day_short_label( string $en ): string {
-		$labels = [
+		$labels = array(
 			'monday'    => 'Ma',
 			'tuesday'   => 'Di',
 			'wednesday' => 'Wo',
@@ -2002,15 +2563,18 @@ final class Blocks {
 			'friday'    => 'Vr',
 			'saturday'  => 'Za',
 			'sunday'    => 'Zo',
-		];
+		);
 		return $labels[ $en ] ?? ucfirst( $en );
 	}
 
 	/**
-	 * @param array<int, string> $days
+	 * Day range label.
+	 *
+	 * @param array $days Days.
+	 * @return string Return value.
 	 */
 	private static function day_range_label( array $days ): string {
-		$order = [
+		$order = array(
 			'monday'    => 1,
 			'tuesday'   => 2,
 			'wednesday' => 3,
@@ -2018,17 +2582,17 @@ final class Blocks {
 			'friday'    => 5,
 			'saturday'  => 6,
 			'sunday'    => 7,
-		];
+		);
 
 		$days = array_values( array_unique( array_filter( $days, static fn( $day ) => isset( $order[ $day ] ) ) ) );
 		usort( $days, static fn( $a, $b ) => $order[ $a ] <=> $order[ $b ] );
 
-		$ranges = [];
-		$start = null;
+		$ranges   = array();
+		$start    = null;
 		$previous = null;
 		foreach ( $days as $day ) {
-			if ( $start === null ) {
-				$start = $day;
+			if ( null === $start ) {
+				$start    = $day;
 				$previous = $day;
 				continue;
 			}
@@ -2039,28 +2603,33 @@ final class Blocks {
 			}
 
 			$ranges[] = $start === $previous ? self::day_short_label( $start ) : self::day_short_label( $start ) . '-' . self::day_short_label( $previous );
-			$start = $day;
+			$start    = $day;
 			$previous = $day;
 		}
 
-		if ( $start !== null && $previous !== null ) {
+		if ( null !== $start && null !== $previous ) {
 			$ranges[] = $start === $previous ? self::day_short_label( $start ) : self::day_short_label( $start ) . '-' . self::day_short_label( $previous );
 		}
 
 		return implode( ', ', $ranges );
 	}
 
+	/**
+	 * Render news mixed grid.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_news_mixed_grid(): string {
-		$cards = [];
+		$cards = array();
 
 		foreach ( ZuidwestImporter::get_news_cache() as $item ) {
-			$ts = strtotime( (string) ( $item['published_at'] ?? '' ) );
+			$ts  = strtotime( (string) ( $item['published_at'] ?? '' ) );
 			$url = (string) ( $item['source_url'] ?? '' );
-			if ( $url === '' ) {
+			if ( '' === $url ) {
 				continue;
 			}
 
-			$cards[] = [
+			$cards[] = array(
 				'source_id' => (string) ( $item['source_id'] ?? '' ),
 				'title'     => (string) ( $item['title'] ?? '' ),
 				'url'       => $url,
@@ -2069,7 +2638,7 @@ final class Blocks {
 				'pretty'    => $ts ? wp_date( 'j F Y', $ts ) : '',
 				'region'    => (string) ( $item['region_label'] ?? '' ),
 				'external'  => true,
-			];
+			);
 		}
 
 		usort( $cards, static fn( $a, $b ) => strcmp( (string) $b['published'], (string) $a['published'] ) );
@@ -2079,26 +2648,33 @@ final class Blocks {
 		?>
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<?php echo self::section_head(
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
+				echo self::section_head(
 					__( 'Lokaal nieuws', 'radio-rucphen' ),
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
 					__( 'De zes meest recente berichten van Zuidwest Update voor onze regio.', 'radio-rucphen' ),
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
 					__( 'Alle nieuws', 'radio-rucphen' ),
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
 					home_url( '/nieuws/' )
-				); ?>
+				);
+				?>
 				<div class="grid grid-cols-3 gap-x-[1.4rem] gap-y-8 max-[767px]:grid-cols-1">
 					<?php
 					$idx = 0;
 					foreach ( $cards as $card ) :
-						$is_lead = $idx === 0;
+						$is_lead    = 0 === $idx;
 						$link_attrs = self::news_link_attrs( $card );
 						?>
 						<article>
+							<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 							<a class="grid h-full gap-[0.65rem] rounded-card border border-[#dce6f2] bg-white pb-[0.9rem] text-brand no-underline" href="<?php echo esc_url( $card['url'] ); ?>"<?php echo $link_attrs; ?>>
-								<?php if ( $card['image'] !== '' ) : ?>
+								<?php if ( '' !== $card['image'] ) : ?>
 									<img class="aspect-[16/9] w-full rounded-t-card bg-[#eef3f8] object-cover" src="<?php echo esc_url( $card['image'] ); ?>" loading="<?php echo $is_lead ? 'eager' : 'lazy'; ?>" alt="">
 								<?php endif; ?>
 								<div class="grid grid-rows-[auto_minmax(3.9rem,auto)_auto] gap-[0.42rem] px-[0.85rem]">
-									<?php if ( $card['region'] !== '' ) : ?>
+									<?php if ( '' !== $card['region'] ) : ?>
 										<span class="inline-flex w-fit items-center rounded-full bg-accent px-[0.58rem] py-[0.22rem] text-[0.72rem] font-extrabold uppercase text-brand"><?php echo esc_html( $card['region'] ); ?></span>
 									<?php endif; ?>
 									<strong class="line-clamp-3 font-display text-[1.02rem] font-[850] leading-[1.22] text-ink"><?php echo esc_html( $card['title'] ); ?></strong>
@@ -2109,28 +2685,34 @@ final class Blocks {
 							</a>
 						</article>
 						<?php
-						$idx++;
+						++$idx;
 					endforeach;
 					?>
 				</div>
 			</div>
 		</section>
+		<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 		<?php echo self::render_zuidwest_article_modal(); ?>
 		<?php
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render news archive.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_news_archive(): string {
-		$cards = [];
+		$cards = array();
 
 		foreach ( ZuidwestImporter::get_news_cache() as $item ) {
-			$ts = strtotime( (string) ( $item['published_at'] ?? '' ) );
+			$ts  = strtotime( (string) ( $item['published_at'] ?? '' ) );
 			$url = (string) ( $item['source_url'] ?? '' );
-			if ( $url === '' ) {
+			if ( '' === $url ) {
 				continue;
 			}
 
-			$cards[] = [
+			$cards[] = array(
 				'source_id' => (string) ( $item['source_id'] ?? '' ),
 				'title'     => (string) ( $item['title'] ?? '' ),
 				'url'       => $url,
@@ -2141,20 +2723,22 @@ final class Blocks {
 				'badge'     => (string) ( $item['region_label'] ?? '' ),
 				'source'    => 'external',
 				'external'  => true,
-			];
+			);
 		}
 
 		$local = new \WP_Query(
-			[
+			array(
 				'post_type'      => 'post',
 				'post_status'    => 'publish',
 				'posts_per_page' => 12,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional meta query for theme content filtering or ordering.
 				'meta_key'       => '_rucphen_news_source',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Intentional meta query for theme content filtering or ordering.
 				'meta_value'     => 'redactie',
 				'orderby'        => 'date',
 				'order'          => 'DESC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 		foreach ( $local->posts as $post ) {
 			if ( ! $post instanceof \WP_Post ) {
@@ -2164,7 +2748,7 @@ final class Blocks {
 				? (string) get_the_post_thumbnail_url( $post, 'rucphen-card' )
 				: (string) get_post_meta( $post->ID, '_rucphen_news_cover', true );
 
-			$cards[] = [
+			$cards[] = array(
 				'source_id' => '',
 				'title'     => get_the_title( $post ),
 				'url'       => get_permalink( $post ),
@@ -2175,7 +2759,7 @@ final class Blocks {
 				'badge'     => __( 'Redactie', 'radio-rucphen' ),
 				'source'    => 'redactie',
 				'external'  => false,
-			];
+			);
 		}
 
 		usort( $cards, static fn( $a, $b ) => strcmp( (string) $b['published'], (string) $a['published'] ) );
@@ -2191,16 +2775,18 @@ final class Blocks {
 					<button class="min-h-11 rounded-full border border-line bg-white px-[0.8rem] py-[0.45rem] font-black text-ink transition aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-white hover:border-[#bfdbfe]" type="button" data-news-filter="external" aria-pressed="false"><?php esc_html_e( 'Zuidwest Update', 'radio-rucphen' ); ?></button>
 				</nav>
 				<div class="grid grid-cols-3 gap-x-[1.4rem] gap-y-8 max-[767px]:grid-cols-1">
-					<?php foreach ( $cards as $idx => $card ) :
+					<?php
+					foreach ( $cards as $idx => $card ) :
 						$link_attrs = self::news_link_attrs( $card );
 						?>
 						<article data-news-card data-news-source="<?php echo esc_attr( (string) $card['source'] ); ?>">
+							<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 							<a class="grid h-full gap-[0.65rem] rounded-card border border-[#dce6f2] bg-white pb-[0.9rem] text-brand no-underline" href="<?php echo esc_url( (string) $card['url'] ); ?>"<?php echo $link_attrs; ?>>
-								<?php if ( $card['image'] !== '' ) : ?>
+								<?php if ( '' !== $card['image'] ) : ?>
 									<img class="aspect-[16/9] w-full rounded-t-card bg-[#eef3f8] object-cover" src="<?php echo esc_url( (string) $card['image'] ); ?>" loading="<?php echo $idx < 3 ? 'eager' : 'lazy'; ?>" alt="">
 								<?php endif; ?>
 								<span class="grid grid-rows-[auto_auto_minmax(4.1rem,auto)_auto] gap-[0.42rem] px-[0.85rem]">
-									<?php if ( $card['badge'] !== '' ) : ?>
+									<?php if ( '' !== $card['badge'] ) : ?>
 										<span class="inline-flex w-fit items-center rounded-full bg-accent px-[0.58rem] py-[0.22rem] text-[0.72rem] font-extrabold uppercase text-brand"><?php echo esc_html( (string) $card['badge'] ); ?></span>
 									<?php endif; ?>
 									<span class="text-[0.8rem] font-extrabold text-[#64748b]"><?php echo esc_html( (string) $card['pretty'] ); ?></span>
@@ -2213,16 +2799,20 @@ final class Blocks {
 				</div>
 			</div>
 		</section>
+		<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 		<?php echo self::render_zuidwest_article_modal(); ?>
 		<?php
 		return (string) ob_get_clean();
 	}
 
 	/**
-	 * @param array<string, mixed> $card
+	 * News link attrs.
+	 *
+	 * @param array $card Card.
+	 * @return string Return value.
 	 */
 	private static function news_link_attrs( array $card ): string {
-		$attrs = [];
+		$attrs = array();
 		if ( ! empty( $card['external'] ) ) {
 			$attrs[] = 'target="_blank"';
 			$attrs[] = 'rel="noopener nofollow"';
@@ -2234,9 +2824,14 @@ final class Blocks {
 			$attrs[] = 'aria-haspopup="dialog"';
 		}
 
-		return $attrs === [] ? '' : ' ' . implode( ' ', $attrs );
+		return array() === $attrs ? '' : ' ' . implode( ' ', $attrs );
 	}
 
+	/**
+	 * Render zuidwest article modal.
+	 *
+	 * @return string Return value.
+	 */
 	private static function render_zuidwest_article_modal(): string {
 		if ( self::$zuidwest_modal_printed ) {
 			return '';
@@ -2266,12 +2861,46 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render video grid.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_video_grid(): string {
 		$videos = array_slice( ZuidwestImporter::get_videos_cache(), 0, 4 );
+		$items  = array();
+
+		foreach ( $videos as $video ) {
+			$link = (string) ( $video['video_embed_url'] ?? $video['source_url'] ?? '' );
+			if ( '' === $link ) {
+				continue;
+			}
+
+			$ts     = strtotime( (string) ( $video['published_at'] ?? '' ) );
+			$pretty = $ts ? wp_date( 'j F Y', $ts ) : '';
+
+			$items[] = array(
+				'excerpt' => (string) ( $video['excerpt'] ?? '' ),
+				'image'   => (string) ( $video['image_url'] ?? '' ),
+				'link'    => $link,
+				'meta'    => implode( ' &middot; ', array_filter( array( (string) ( $video['region_label'] ?? '' ), $pretty ) ) ),
+				'title'   => (string) ( $video['title'] ?? '' ),
+			);
+		}
+
+		if ( array() === $items ) {
+			return '';
+		}
+
+		$featured       = $items[0];
+		$side_items     = count( $items ) > 1 ? $items : array();
+		$layout_classes = array() === $side_items
+			? 'grid'
+			: 'grid grid-cols-[minmax(0,1.42fr)_minmax(300px,0.72fr)] gap-[1.125rem] max-[980px]:grid-cols-1';
 
 		ob_start();
 		?>
-		<section class="bg-[radial-gradient(circle_at_92%_16%,rgb(255_222_0_/_0.16),transparent_30%),linear-gradient(135deg,#003576_0%,#082a68_48%,#001f49_100%)] py-16 text-white">
+		<section class="bg-[linear-gradient(135deg,#003576_0%,#082a68_52%,#001f49_100%)] py-16 text-white">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 					<div>
@@ -2280,62 +2909,47 @@ final class Blocks {
 					</div>
 					<a class="inline-flex w-fit items-center gap-2 rounded-md border border-white/45 bg-transparent px-4 py-2 text-sm font-bold text-white no-underline hover:bg-white/10" href="<?php echo esc_url( home_url( '/video/' ) ); ?>"><?php esc_html_e( 'Alle video\'s', 'radio-rucphen' ); ?></a>
 				</div>
-				<div class="grid auto-rows-[minmax(136px,auto)] grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)] gap-4 max-[1023px]:auto-rows-auto max-[1023px]:grid-cols-2 max-[767px]:grid-cols-1">
-					<?php
-					$idx = 0;
-					foreach ( $videos as $video ) :
-						$is_large = $idx === 0;
-						$link     = (string) ( $video['video_embed_url'] ?? $video['source_url'] ?? '' );
-						if ( $link === '' ) {
-							$idx++;
-							continue;
-						}
-
-						$ts       = strtotime( (string) ( $video['published_at'] ?? '' ) );
-						$pretty   = $ts ? wp_date( 'j F Y', $ts ) : '';
-						$meta     = implode( ' &middot; ', array_filter( [ (string) ( $video['region_label'] ?? '' ), $pretty ] ) );
-						$title    = (string) ( $video['title'] ?? '' );
-						$excerpt  = (string) ( $video['excerpt'] ?? '' );
-
-						$article_class = $is_large ? 'row-span-3 max-[1023px]:col-span-2 max-[1023px]:row-span-1 max-[767px]:col-span-1' : '';
-						$link_class    = $is_large
-							? 'group grid h-full overflow-hidden rounded-card border border-cyan/45 bg-[#f8fbff] text-ink no-underline shadow-[0_24px_56px_rgb(0_14_45_/_0.32)] transition duration-[220ms] hover:-translate-y-0.5 hover:border-cyan hover:shadow-[0_30px_70px_rgb(0_14_45_/_0.38)]'
-							: 'group grid h-full grid-cols-[150px_minmax(0,1fr)] overflow-hidden rounded-card border border-cyan/45 bg-[#f8fbff] text-ink no-underline shadow-[0_24px_56px_rgb(0_14_45_/_0.32)] transition duration-[220ms] hover:-translate-y-0.5 hover:border-cyan hover:shadow-[0_30px_70px_rgb(0_14_45_/_0.38)] max-[1023px]:grid-cols-1';
-						$media_class   = $is_large
-							? 'relative block aspect-[16/9] overflow-hidden bg-[#dbe5f4]'
-							: 'relative block min-h-[136px] overflow-hidden bg-[#dbe5f4] max-[1023px]:aspect-[16/9]';
-						$play_class    = $is_large
-							? 'absolute left-4 top-4 grid size-16 place-items-center rounded-full bg-accent text-brand shadow-[0_14px_30px_rgb(0_0_0_/_0.24)]'
-							: 'absolute left-3 top-3 grid size-11 place-items-center rounded-full bg-accent text-brand shadow-[0_14px_30px_rgb(0_0_0_/_0.24)]';
-						$content_class = $is_large
-							? 'grid content-start gap-[0.45rem] px-[1.35rem] py-5'
-							: 'grid content-center gap-[0.45rem] p-4';
-						?>
-						<article class="<?php echo esc_attr( $article_class ); ?>">
-							<a class="<?php echo esc_attr( $link_class ); ?>" href="<?php echo esc_url( $link ); ?>" target="_blank" rel="noopener nofollow">
-								<span class="<?php echo esc_attr( $media_class ); ?>">
-									<?php if ( ! empty( $video['image_url'] ) ) : ?>
-										<img class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.035]" src="<?php echo esc_url( (string) $video['image_url'] ); ?>" loading="<?php echo $is_large ? 'eager' : 'lazy'; ?>" alt="">
-									<?php endif; ?>
-									<span class="<?php echo esc_attr( $play_class ); ?>">
-										<svg class="<?php echo $is_large ? 'size-7' : 'size-5'; ?> translate-x-0.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+				<div class="<?php echo esc_attr( $layout_classes ); ?>" data-video-spotlight>
+					<a class="group grid overflow-hidden rounded-card bg-brand-dark text-white no-underline shadow-[0_28px_78px_rgb(0_0_0_/_0.28)]" href="<?php echo esc_url( $featured['link'] ); ?>" target="_blank" rel="noopener nofollow" data-video-spotlight-feature>
+						<span class="relative block h-[min(38vw,380px)] min-h-[300px] overflow-hidden bg-brand after:absolute after:inset-0 after:bg-[linear-gradient(0deg,rgb(0_24_65_/_0.34),rgb(0_24_65_/_0.02)_62%)] max-[767px]:h-[250px] max-[767px]:min-h-0">
+							<?php if ( '' !== $featured['image'] ) : ?>
+								<img class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.035]" src="<?php echo esc_url( $featured['image'] ); ?>" loading="eager" alt="" data-video-spotlight-image>
+							<?php endif; ?>
+							<span class="absolute left-6 top-6 z-10 grid size-[60px] place-items-center rounded-full bg-accent text-brand shadow-[0_14px_34px_rgb(0_0_0_/_0.28)] max-[767px]:left-5 max-[767px]:top-5 max-[767px]:size-12" aria-hidden="true">
+								<svg class="size-7 translate-x-0.5 max-[767px]:size-5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+							</span>
+						</span>
+						<span class="grid gap-[0.55rem] bg-[linear-gradient(180deg,#003576_0%,#002a5f_100%)] p-6 max-[767px]:p-5">
+							<span class="text-[0.75rem] font-black uppercase leading-[1.2] text-accent" data-video-spotlight-meta><?php echo wp_kses_post( $featured['meta'] ); ?></span>
+							<strong class="line-clamp-3 max-w-[760px] font-display text-[clamp(1.55rem,1.15rem_+_1.45vw,2.85rem)] font-black leading-[1.05] text-white max-[767px]:text-[clamp(1.45rem,1.08rem_+_3.5vw,2.25rem)]" data-video-spotlight-title><?php echo esc_html( $featured['title'] ); ?></strong>
+								<span class="line-clamp-2 max-w-[62ch] text-base font-bold leading-[1.45] text-white/85" data-video-spotlight-excerpt <?php echo '' === $featured['excerpt'] ? 'hidden' : ''; ?>><?php echo esc_html( $featured['excerpt'] ); ?></span>
+						</span>
+					</a>
+					<?php if ( array() !== $side_items ) : ?>
+						<div class="grid content-start gap-[10px]">
+							<?php foreach ( $side_items as $idx => $item ) : ?>
+									<button class="group grid min-h-[104px] cursor-pointer grid-cols-[112px_minmax(0,1fr)] items-center gap-3 rounded-card bg-white/90 p-2 text-left text-ink transition duration-[160ms] hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_14px_32px_rgb(0_53_118_/_0.13)] aria-pressed:bg-white aria-pressed:shadow-[0_14px_32px_rgb(0_53_118_/_0.13)] max-[767px]:grid-cols-[94px_minmax(0,1fr)]" type="button" aria-pressed="<?php echo 0 === $idx ? 'true' : 'false'; ?>" data-video-spotlight-item data-video-url="<?php echo esc_url( $item['link'] ); ?>" data-video-image="<?php echo esc_url( $item['image'] ); ?>" data-video-meta="<?php echo esc_attr( $item['meta'] ); ?>" data-video-title="<?php echo esc_attr( $item['title'] ); ?>" data-video-excerpt="<?php echo esc_attr( $item['excerpt'] ); ?>">
+									<span class="relative h-[88px] overflow-hidden rounded-sm bg-[#dbe5f4] max-[767px]:h-[76px]">
+										<?php if ( '' !== $item['image'] ) : ?>
+											<img class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.035]" src="<?php echo esc_url( $item['image'] ); ?>" loading="lazy" alt="">
+										<?php endif; ?>
+										<span class="absolute left-2 top-2 grid size-[30px] place-items-center rounded-full bg-accent text-brand shadow-[0_8px_20px_rgb(0_0_0_/_0.22)]" aria-hidden="true">
+											<svg class="size-4 translate-x-px" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+										</span>
 									</span>
-								</span>
-								<span class="<?php echo esc_attr( $content_class ); ?>">
-									<?php if ( $meta !== '' ) : ?>
-										<span class="inline-flex w-fit max-w-full rounded-full bg-accent px-[0.58rem] py-[0.24rem] text-[0.72rem] font-black uppercase leading-[1.1] text-brand"><?php echo wp_kses_post( $meta ); ?></span>
-									<?php endif; ?>
-									<strong class="font-display <?php echo $is_large ? 'text-[clamp(1.5rem,1.15rem_+_1.35vw,2.5rem)]' : 'line-clamp-3 text-[1.02rem]'; ?> font-black leading-[1.16] text-ink"><?php echo esc_html( $title ); ?></strong>
-									<?php if ( $is_large && $excerpt !== '' ) : ?>
-										<span class="line-clamp-3 max-w-[64ch] text-[0.98rem] text-ink-soft"><?php echo esc_html( $excerpt ); ?></span>
-									<?php endif; ?>
-								</span>
-							</a>
-						</article>
-						<?php
-						$idx++;
-					endforeach;
-					?>
+									<span class="grid min-w-0 gap-[0.32rem]">
+										<?php if ( '' !== $item['meta'] ) : ?>
+											<span class="text-[0.75rem] font-black uppercase leading-[1.2] text-[#64748b]"><?php echo wp_kses_post( $item['meta'] ); ?></span>
+										<?php endif; ?>
+										<strong class="line-clamp-2 font-display text-base font-black leading-[1.14] text-ink"><?php echo esc_html( $item['title'] ); ?></strong>
+										<?php if ( '' !== $item['excerpt'] ) : ?>
+											<span class="line-clamp-2 text-[0.84rem] font-bold leading-[1.35] text-[#64748b]"><?php echo esc_html( $item['excerpt'] ); ?></span>
+										<?php endif; ?>
+									</span>
+								</button>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
 				</div>
 			</div>
 		</section>
@@ -2343,6 +2957,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render video archive.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_video_archive(): string {
 		$videos = ZuidwestImporter::get_videos_cache();
 
@@ -2351,11 +2970,12 @@ final class Blocks {
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="grid grid-cols-3 gap-x-[1.4rem] gap-y-8 max-[767px]:grid-cols-1">
-					<?php foreach ( $videos as $idx => $video ) :
-						$link = (string) ( $video['video_embed_url'] ?? $video['source_url'] ?? '' );
-						$ts = strtotime( (string) ( $video['published_at'] ?? '' ) );
-						$pretty = $ts ? wp_date( 'j F Y', $ts ) : '';
-						$meta_parts = array_filter( [ (string) ( $video['region_label'] ?? '' ), $pretty ] );
+					<?php
+					foreach ( $videos as $idx => $video ) :
+						$link       = (string) ( $video['video_embed_url'] ?? $video['source_url'] ?? '' );
+						$ts         = strtotime( (string) ( $video['published_at'] ?? '' ) );
+						$pretty     = $ts ? wp_date( 'j F Y', $ts ) : '';
+						$meta_parts = array_filter( array( (string) ( $video['region_label'] ?? '' ), $pretty ) );
 						?>
 						<article>
 							<a class="grid h-full overflow-hidden rounded-card border border-[#dce6f2] bg-white text-ink no-underline shadow-sm" href="<?php echo esc_url( $link ); ?>" target="_blank" rel="noopener nofollow">
@@ -2370,7 +2990,7 @@ final class Blocks {
 									</span>
 								</span>
 								<span class="grid gap-2 p-4">
-									<?php if ( $meta_parts !== [] ) : ?>
+									<?php if ( array() !== $meta_parts ) : ?>
 										<span class="text-[0.78rem] font-extrabold uppercase text-[#64748b]"><?php echo esc_html( implode( ' · ', $meta_parts ) ); ?></span>
 									<?php endif; ?>
 									<strong class="font-display text-[1.08rem] font-extrabold leading-[1.16] text-ink"><?php echo esc_html( (string) ( $video['title'] ?? '' ) ); ?></strong>
@@ -2388,41 +3008,59 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render events grid.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_events_grid(): string {
 		$now = current_datetime();
 
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::EVENT,
 				'post_status'    => 'publish',
 				'posts_per_page' => 12,
-				'meta_query'     => [ [ 'key' => '_rucphen_event_start', 'value' => $now->format( 'c' ), 'compare' => '>=', 'type' => 'DATETIME' ] ],
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Intentional meta query for theme content filtering or ordering.
+				'meta_query'     => array(
+					array(
+						'key'     => '_rucphen_event_start',
+						'value'   => $now->format( 'c' ),
+						'compare' => '>=',
+						'type'    => 'DATETIME',
+					),
+				),
 				'orderby'        => 'meta_value',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional meta query for theme content filtering or ordering.
 				'meta_key'       => '_rucphen_event_start',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
 		ob_start();
 		?>
 		<section class="bg-white py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<?php echo self::section_head(
+				<?php
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly.
+				echo self::section_head(
 					__( 'Lokale agenda', 'radio-rucphen' ),
 					__( 'Komende activiteiten in Rucphen en omgeving.', 'radio-rucphen' ),
 					__( 'Hele agenda', 'radio-rucphen' ),
-					get_post_type_archive_link( PostTypes::EVENT ) ?: '#'
-				); ?>
+					get_post_type_archive_link( PostTypes::EVENT ) ? get_post_type_archive_link( PostTypes::EVENT ) : '#'
+				);
+				?>
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					<?php foreach ( $query->posts as $post ) :
+					<?php
+					foreach ( $query->posts as $post ) :
 						$start_iso = (string) get_post_meta( $post->ID, '_rucphen_event_start', true );
 						$location  = (string) get_post_meta( $post->ID, '_rucphen_event_location', true );
 						$url       = (string) get_post_meta( $post->ID, '_rucphen_event_url', true );
-						$ts        = $start_iso !== '' ? strtotime( $start_iso ) : false;
+						$ts        = '' !== $start_iso ? strtotime( $start_iso ) : false;
 						?>
 						<article class="grid grid-cols-[5rem_1fr] items-start gap-4 rounded-card bg-surface p-5 shadow-sm">
-							<?php if ( $ts !== false ) : ?>
+							<?php if ( false !== $ts ) : ?>
 								<div class="grid place-items-center rounded-md bg-brand p-3 text-center text-white">
 									<span class="text-xs font-bold uppercase tracking-wider"><?php echo esc_html( strtolower( wp_date( 'M', $ts ) ) ); ?></span>
 									<strong class="font-display text-3xl font-extrabold leading-none"><?php echo esc_html( wp_date( 'j', $ts ) ); ?></strong>
@@ -2430,14 +3068,20 @@ final class Blocks {
 							<?php endif; ?>
 							<div>
 								<h3 class="font-display text-lg font-extrabold leading-tight"><?php echo esc_html( get_the_title( $post ) ); ?></h3>
-								<?php if ( $ts !== false || $location !== '' ) : ?>
+								<?php if ( false !== $ts || '' !== $location ) : ?>
 									<p class="mt-1 text-sm text-ink-soft">
-										<?php if ( $ts !== false ) : ?><?php echo esc_html( wp_date( 'j F Y', $ts ) ); ?><?php endif; ?>
-										<?php if ( $location !== '' ) : ?> &middot; <?php echo esc_html( $location ); ?><?php endif; ?>
+										<?php
+										if ( false !== $ts ) :
+											?>
+											<?php echo esc_html( wp_date( 'j F Y', $ts ) ); ?><?php endif; ?>
+										<?php
+										if ( '' !== $location ) :
+											?>
+											&middot; <?php echo esc_html( $location ); ?><?php endif; ?>
 									</p>
 								<?php endif; ?>
-								<p class="mt-2 text-sm text-ink-soft"><?php echo esc_html( wp_strip_all_tags( get_the_excerpt( $post ) ?: $post->post_content ) ); ?></p>
-								<?php if ( $url !== '' ) : ?>
+								<p class="mt-2 text-sm text-ink-soft"><?php echo esc_html( wp_strip_all_tags( get_the_excerpt( $post ) ? get_the_excerpt( $post ) : $post->post_content ) ); ?></p>
+								<?php if ( '' !== $url ) : ?>
 									<a class="mt-3 inline-flex items-center gap-1 text-sm font-extrabold text-brand no-underline hover:underline" href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Meer informatie', 'radio-rucphen' ); ?> &rarr;</a>
 								<?php endif; ?>
 							</div>
@@ -2450,28 +3094,42 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render events archive.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_events_archive(): string {
-		$now = current_datetime();
+		$now   = current_datetime();
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::EVENT,
 				'post_status'    => 'publish',
 				'posts_per_page' => -1,
-				'meta_query'     => [ [ 'key' => '_rucphen_event_start', 'value' => $now->format( 'c' ), 'compare' => '>=', 'type' => 'DATETIME' ] ],
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Intentional meta query for theme content filtering or ordering.
+				'meta_query'     => array(
+					array(
+						'key'     => '_rucphen_event_start',
+						'value'   => $now->format( 'c' ),
+						'compare' => '>=',
+						'type'    => 'DATETIME',
+					),
+				),
 				'orderby'        => 'meta_value',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional meta query for theme content filtering or ordering.
 				'meta_key'       => '_rucphen_event_start',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
-		$months = [];
+		$months = array();
 		foreach ( $query->posts as $post ) {
 			if ( ! $post instanceof \WP_Post ) {
 				continue;
 			}
 			$ts = strtotime( (string) get_post_meta( $post->ID, '_rucphen_event_start', true ) );
-			if ( $ts !== false ) {
+			if ( false !== $ts ) {
 				$months[ wp_date( 'Y-m', $ts ) ] = wp_date( 'F Y', $ts );
 			}
 		}
@@ -2487,20 +3145,21 @@ final class Blocks {
 					<?php endforeach; ?>
 				</nav>
 				<div class="grid gap-4">
-					<?php foreach ( $query->posts as $post ) :
+					<?php
+					foreach ( $query->posts as $post ) :
 						if ( ! $post instanceof \WP_Post ) {
 							continue;
 						}
 						$start_iso = (string) get_post_meta( $post->ID, '_rucphen_event_start', true );
 						$location  = (string) get_post_meta( $post->ID, '_rucphen_event_location', true );
 						$url       = (string) get_post_meta( $post->ID, '_rucphen_event_url', true );
-						$ts        = $start_iso !== '' ? strtotime( $start_iso ) : false;
-						$month     = $ts !== false ? wp_date( 'Y-m', $ts ) : '';
+						$ts        = '' !== $start_iso ? strtotime( $start_iso ) : false;
+						$month     = false !== $ts ? wp_date( 'Y-m', $ts ) : '';
 						$more_attr = self::is_external_url( $url ) ? ' target="_blank" rel="noopener"' : '';
 						?>
 						<article class="rounded-card border border-line bg-white shadow-sm" data-event-card data-event-month="<?php echo esc_attr( $month ); ?>">
 							<div class="grid grid-cols-[78px_minmax(0,1fr)] items-start gap-4 p-5 max-[767px]:grid-cols-1">
-								<?php if ( $ts !== false ) : ?>
+								<?php if ( false !== $ts ) : ?>
 									<div class="grid w-[70px] place-items-center rounded-sm bg-brand p-3 text-center text-white">
 										<span class="text-xs font-black uppercase"><?php echo esc_html( strtolower( wp_date( 'M', $ts ) ) ); ?></span>
 										<strong class="font-display text-[2rem] font-extrabold leading-none"><?php echo esc_html( wp_date( 'j', $ts ) ); ?></strong>
@@ -2509,13 +3168,20 @@ final class Blocks {
 								<div>
 									<h2 class="font-display text-[1.28rem] font-extrabold leading-[1.12] text-ink"><?php echo esc_html( get_the_title( $post ) ); ?></h2>
 									<p class="mt-1 text-sm font-bold text-ink-soft">
-										<?php if ( $ts !== false ) : ?><?php echo esc_html( wp_date( 'j F Y', $ts ) ); ?><?php endif; ?>
-										<?php if ( $location !== '' ) : ?> &middot; <?php echo esc_html( $location ); ?><?php endif; ?>
+										<?php
+										if ( false !== $ts ) :
+											?>
+											<?php echo esc_html( wp_date( 'j F Y', $ts ) ); ?><?php endif; ?>
+										<?php
+										if ( '' !== $location ) :
+											?>
+											&middot; <?php echo esc_html( $location ); ?><?php endif; ?>
 									</p>
-									<p class="mt-2 text-ink-soft"><?php echo esc_html( wp_strip_all_tags( get_the_excerpt( $post ) ?: $post->post_content ) ); ?></p>
+									<p class="mt-2 text-ink-soft"><?php echo esc_html( wp_strip_all_tags( get_the_excerpt( $post ) ? get_the_excerpt( $post ) : $post->post_content ) ); ?></p>
 									<div class="mt-4 flex flex-wrap gap-2">
 										<a class="inline-flex min-h-10 items-center rounded-sm border border-[#c9d7ec] bg-white px-3 py-2 text-sm font-extrabold text-brand no-underline hover:bg-[#e9eef7]" href="<?php echo esc_url( self::event_ics_url( $post ) ); ?>"><?php esc_html_e( 'Voeg toe aan kalender', 'radio-rucphen' ); ?></a>
-										<?php if ( $url !== '' ) : ?>
+										<?php if ( '' !== $url ) : ?>
+											<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 											<a class="inline-flex min-h-10 items-center rounded-sm border border-[#c9d7ec] bg-white px-3 py-2 text-sm font-extrabold text-brand no-underline hover:bg-[#e9eef7]" href="<?php echo esc_url( $url ); ?>"<?php echo $more_attr; ?>><?php esc_html_e( 'Meer informatie', 'radio-rucphen' ); ?></a>
 										<?php endif; ?>
 									</div>
@@ -2530,12 +3196,23 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Event ics url.
+	 *
+	 * @param \WP_Post $event Event.
+	 * @return string Return value.
+	 */
 	private static function event_ics_url( \WP_Post $event ): string {
 		$slug = preg_replace( '/-\d{4}-\d{2}-\d{2}$/', '', $event->post_name );
-		$slug = is_string( $slug ) && $slug !== '' ? $slug : $event->post_name;
+		$slug = is_string( $slug ) && '' !== $slug ? $slug : $event->post_name;
 		return home_url( '/static-source/agenda/' . $slug . '.ics' );
 	}
 
+	/**
+	 * Render frequency grid.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_frequency_grid(): string {
 		$f = Settings::get( Settings::OPTION_FREQUENCIES );
 
@@ -2543,16 +3220,30 @@ final class Blocks {
 		?>
 		<section class="bg-surface py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
+				<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 				<?php echo self::section_head( __( 'Frequenties', 'radio-rucphen' ), __( 'Zo luister je naar Radio Rucphen.', 'radio-rucphen' ) ); ?>
 				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					<?php
-					$tiles = [
-						[ 'label' => 'FM',                                  'value' => (string) $f['fm_mhz'] . ' MHz' ],
-						[ 'label' => 'DAB+',                                'value' => (string) $f['dab_blocks'] ],
-						[ 'label' => __( 'Kabel', 'radio-rucphen' ),         'value' => trim( (string) $f['cable_provider'] . ' ' . (string) $f['cable_channel'] ) ],
-						[ 'label' => __( 'Dekking', 'radio-rucphen' ),       'value' => (string) $f['coverage'] ],
-					];
-					foreach ( $tiles as $t ) : ?>
+					$tiles = array(
+						array(
+							'label' => 'FM',
+							'value' => (string) $f['fm_mhz'] . ' MHz',
+						),
+						array(
+							'label' => 'DAB+',
+							'value' => (string) $f['dab_blocks'],
+						),
+						array(
+							'label' => __( 'Kabel', 'radio-rucphen' ),
+							'value' => trim( (string) $f['cable_provider'] . ' ' . (string) $f['cable_channel'] ),
+						),
+						array(
+							'label' => __( 'Dekking', 'radio-rucphen' ),
+							'value' => (string) $f['coverage'],
+						),
+					);
+					foreach ( $tiles as $t ) :
+						?>
 						<article class="rounded-card bg-white p-5 shadow-sm">
 							<p class="text-xs font-bold uppercase tracking-wider text-ink-soft"><?php echo esc_html( $t['label'] ); ?></p>
 							<p class="mt-1 font-display text-2xl font-extrabold text-brand"><?php echo esc_html( $t['value'] ); ?></p>
@@ -2565,13 +3256,18 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render frequency options.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_frequency_options(): string {
-		$f = Settings::get( Settings::OPTION_FREQUENCIES );
-		$fm = trim( (string) ( $f['fm_mhz'] ?? '' ) );
-		$dab = str_replace( ',', ' /', (string) ( $f['dab_blocks'] ?? '' ) );
+		$f              = Settings::get( Settings::OPTION_FREQUENCIES );
+		$fm             = trim( (string) ( $f['fm_mhz'] ?? '' ) );
+		$dab            = str_replace( ',', ' /', (string) ( $f['dab_blocks'] ?? '' ) );
 		$cable_provider = (string) ( $f['cable_provider'] ?? '' );
-		$cable_channel = (string) ( $f['cable_channel'] ?? '' );
-		$coverage = (string) ( $f['coverage'] ?? '' );
+		$cable_channel  = (string) ( $f['cable_channel'] ?? '' );
+		$coverage       = (string) ( $f['coverage'] ?? '' );
 
 		ob_start();
 		?>
@@ -2581,12 +3277,32 @@ final class Blocks {
 					<article class="rounded-card border border-[#dce6f2] bg-white p-5 shadow-sm">
 						<h2 class="font-display text-[1.2rem] font-extrabold text-ink">FM</h2>
 						<p class="mt-2 font-display text-[2rem] font-extrabold leading-none text-brand"><?php echo esc_html( $fm ); ?></p>
-						<p class="mt-2 text-ink-soft"><?php echo esc_html( sprintf( __( 'MHz in %s.', 'radio-rucphen' ), $coverage ) ); ?></p>
+							<p class="mt-2 text-ink-soft">
+							<?php
+							echo esc_html(
+								sprintf(
+								/* translators: %s: coverage area. */
+									__( 'MHz in %s.', 'radio-rucphen' ),
+									$coverage
+								)
+							);
+							?>
+															</p>
 					</article>
 					<article class="rounded-card border border-[#dce6f2] bg-white p-5 shadow-sm">
 						<h2 class="font-display text-[1.2rem] font-extrabold text-ink">DAB+</h2>
 						<p class="mt-2 font-display text-[2rem] font-extrabold leading-none text-brand"><?php echo esc_html( $dab ); ?></p>
-						<p class="mt-2 text-ink-soft"><?php echo esc_html( sprintf( __( 'Kanalen voor %s.', 'radio-rucphen' ), $coverage ) ); ?></p>
+							<p class="mt-2 text-ink-soft">
+							<?php
+							echo esc_html(
+								sprintf(
+								/* translators: %s: coverage area. */
+									__( 'Kanalen voor %s.', 'radio-rucphen' ),
+									$coverage
+								)
+							);
+							?>
+															</p>
 					</article>
 					<article class="rounded-card border border-[#dce6f2] bg-white p-5 shadow-sm">
 						<h2 class="font-display text-[1.2rem] font-extrabold text-ink"><?php esc_html_e( 'Kabel', 'radio-rucphen' ); ?></h2>
@@ -2623,6 +3339,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render whatsapp cta.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_whatsapp_cta(): string {
 		$contact = Settings::get( Settings::OPTION_CONTACT );
 		$number  = preg_replace( '/\D+/', '', (string) ( $contact['whatsapp_number'] ?? '' ) );
@@ -2649,13 +3370,18 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render contact details.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_contact_details(): string {
-		$contact = Settings::get( Settings::OPTION_CONTACT );
-		$studio_email = (string) ( $contact['email_studio'] ?? '' );
+		$contact        = Settings::get( Settings::OPTION_CONTACT );
+		$studio_email   = (string) ( $contact['email_studio'] ?? '' );
 		$redactie_email = (string) ( $contact['email_redactie'] ?? '' );
-		$number = preg_replace( '/\D+/', '', (string) ( $contact['whatsapp_number'] ?? '' ) );
-		$text = rawurlencode( (string) ( $contact['whatsapp_default_text'] ?? '' ) );
-		$wa_url = 'https://wa.me/' . $number . '?text=' . $text;
+		$number         = preg_replace( '/\D+/', '', (string) ( $contact['whatsapp_number'] ?? '' ) );
+		$text           = rawurlencode( (string) ( $contact['whatsapp_default_text'] ?? '' ) );
+		$wa_url         = 'https://wa.me/' . $number . '?text=' . $text;
 
 		ob_start();
 		?>
@@ -2663,13 +3389,13 @@ final class Blocks {
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?> grid grid-cols-2 gap-5 max-[767px]:grid-cols-1">
 				<article class="rounded-card border border-[#dce6f2] bg-white p-6 shadow-sm">
 					<h2 class="font-display text-[1.55rem] font-extrabold leading-[1.08] text-ink"><?php esc_html_e( 'Studio', 'radio-rucphen' ); ?></h2>
-					<?php if ( $studio_email !== '' ) : ?>
+					<?php if ( '' !== $studio_email ) : ?>
 						<p class="mt-4 text-ink-soft"><?php esc_html_e( 'E-mail:', 'radio-rucphen' ); ?> <a class="font-bold text-brand no-underline hover:underline" href="mailto:<?php echo esc_attr( $studio_email ); ?>"><?php echo esc_html( $studio_email ); ?></a></p>
 					<?php endif; ?>
 					<p class="mt-3 text-ink-soft"><?php esc_html_e( 'Postadres: Postadres volgt.', 'radio-rucphen' ); ?></p>
 					<p class="mt-3 text-ink-soft"><?php esc_html_e( 'Er staat bewust geen studio-telefoonnummer op de site. Verzoekjes lopen via WhatsApp en e-mail.', 'radio-rucphen' ); ?></p>
 					<h2 class="mt-6 font-display text-[1.55rem] font-extrabold leading-[1.08] text-ink"><?php esc_html_e( 'Redactie', 'radio-rucphen' ); ?></h2>
-					<?php if ( $redactie_email !== '' ) : ?>
+					<?php if ( '' !== $redactie_email ) : ?>
 						<p class="mt-4 text-ink-soft"><?php esc_html_e( 'E-mail:', 'radio-rucphen' ); ?> <a class="font-bold text-brand no-underline hover:underline" href="mailto:<?php echo esc_attr( $redactie_email ); ?>"><?php echo esc_html( $redactie_email ); ?></a></p>
 					<?php endif; ?>
 				</article>
@@ -2684,6 +3410,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render about story.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_about_story(): string {
 		ob_start();
 		?>
@@ -2706,6 +3437,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render about board.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_about_board(): string {
 		ob_start();
 		?>
@@ -2714,7 +3450,7 @@ final class Blocks {
 				<h2 class="font-display text-[2rem] font-extrabold leading-[1.08] text-ink"><?php esc_html_e( 'Bestuur', 'radio-rucphen' ); ?></h2>
 				<div class="mt-5 grid grid-cols-3 gap-5 max-[767px]:grid-cols-1">
 					<?php
-					$roles = [ __( 'Voorzitter', 'radio-rucphen' ), __( 'Secretaris', 'radio-rucphen' ), __( 'Penningmeester', 'radio-rucphen' ) ];
+					$roles = array( __( 'Voorzitter', 'radio-rucphen' ), __( 'Secretaris', 'radio-rucphen' ), __( 'Penningmeester', 'radio-rucphen' ) );
 					foreach ( $roles as $idx => $role ) :
 						?>
 						<article class="overflow-hidden rounded-card border border-[#dce6f2] bg-white shadow-sm">
@@ -2732,9 +3468,14 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render about anbi.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_about_anbi(): string {
-		$org = Settings::get( Settings::OPTION_ORGANIZATION );
-		$kvk = (string) ( $org['kvk'] ?? 'TBD' );
+		$org  = Settings::get( Settings::OPTION_ORGANIZATION );
+		$kvk  = (string) ( $org['kvk'] ?? 'TBD' );
 		$rsin = (string) ( $org['rsin'] ?? 'TBD' );
 		$iban = (string) ( $org['iban'] ?? 'TBD' );
 
@@ -2744,7 +3485,13 @@ final class Blocks {
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<h2 class="font-display text-[2rem] font-extrabold leading-[1.08] text-ink"><?php esc_html_e( 'ANBI-gegevens', 'radio-rucphen' ); ?></h2>
 				<div class="mt-5 grid grid-cols-3 gap-5 max-[767px]:grid-cols-1">
-					<?php foreach ( [ 'KvK' => $kvk, 'RSIN' => $rsin, 'IBAN' => $iban ] as $label => $value ) : ?>
+					<?php
+					foreach ( array(
+						'KvK'  => $kvk,
+						'RSIN' => $rsin,
+						'IBAN' => $iban,
+					) as $label => $value ) :
+						?>
 						<article class="rounded-card border border-[#dce6f2] bg-white p-5 shadow-sm">
 							<h3 class="font-display text-[1.18rem] font-extrabold text-ink"><?php echo esc_html( $label ); ?></h3>
 							<p class="mt-2 text-ink-soft"><?php echo esc_html( $value ); ?></p>
@@ -2758,76 +3505,85 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render legal content.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_legal_content(): string {
-		$page = get_queried_object();
-		$slug = $page instanceof \WP_Post ? $page->post_name : '';
-		$org = Settings::get( Settings::OPTION_ORGANIZATION );
+		$page    = get_queried_object();
+		$slug    = $page instanceof \WP_Post ? $page->post_name : '';
+		$org     = Settings::get( Settings::OPTION_ORGANIZATION );
 		$contact = Settings::get( Settings::OPTION_CONTACT );
 
-		$pages = [
-			'privacy' => [
-				'title' => __( 'Privacyverklaring', 'radio-rucphen' ),
-				'intro' => __( 'Privacyverklaring van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
-				'sections' => [
-					[
+		$pages = array(
+			'privacy'    => array(
+				'title'    => __( 'Privacyverklaring', 'radio-rucphen' ),
+				'intro'    => __( 'Privacyverklaring van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
+				'sections' => array(
+					array(
 						'title' => __( 'Welke gegevens verwerken wij?', 'radio-rucphen' ),
 						'body'  => __( 'Deze site gebruikt geen analytics en geen trackingcookies. De live-player bewaart alleen het gekozen volume lokaal in je browser.', 'radio-rucphen' ),
-					],
-					[
+					),
+					array(
 						'title' => __( 'Contact', 'radio-rucphen' ),
-						'body'  => sprintf( __( 'Mail privacyvragen naar de redactie via de contactpagina of via %s.', 'radio-rucphen' ), (string) ( $contact['email_redactie'] ?? 'redactie@radiorucphen.nl' ) ),
-					],
-				],
-			],
-			'cookies' => [
-				'title' => __( 'Cookiebeleid', 'radio-rucphen' ),
-				'intro' => __( 'Cookiebeleid van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
-				'sections' => [
-					[
+						'body'  => sprintf(
+							/* translators: %s: editorial email address. */
+							__( 'Mail privacyvragen naar de redactie via de contactpagina of via %s.', 'radio-rucphen' ),
+							(string) ( $contact['email_redactie'] ?? 'redactie@radiorucphen.nl' )
+						),
+					),
+				),
+			),
+			'cookies'    => array(
+				'title'    => __( 'Cookiebeleid', 'radio-rucphen' ),
+				'intro'    => __( 'Cookiebeleid van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
+				'sections' => array(
+					array(
 						'title' => __( 'Geen trackingcookies', 'radio-rucphen' ),
 						'body'  => __( 'Radio Rucphen plaatst geen advertentie- of trackingcookies. De volume-instelling wordt functioneel bewaard in localStorage.', 'radio-rucphen' ),
-					],
-				],
-			],
-			'disclaimer' => [
-				'title' => __( 'Disclaimer', 'radio-rucphen' ),
-				'intro' => __( 'Disclaimer en voorwaarden van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
-				'sections' => [
-					[
+					),
+				),
+			),
+			'disclaimer' => array(
+				'title'    => __( 'Disclaimer', 'radio-rucphen' ),
+				'intro'    => __( 'Disclaimer en voorwaarden van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
+				'sections' => array(
+					array(
 						'title' => __( 'Externe links', 'radio-rucphen' ),
 						'body'  => __( 'Nieuws- en videokaarten van Zuidwest Update linken naar de bron. Radio Rucphen is niet verantwoordelijk voor inhoud op externe websites.', 'radio-rucphen' ),
-					],
-					[
+					),
+					array(
 						'title' => __( 'Auteursrecht', 'radio-rucphen' ),
 						'body'  => __( 'Eigen teksten en beelden blijven eigendom van Radio Rucphen of de genoemde rechthebbenden.', 'radio-rucphen' ),
-					],
-				],
-			],
-			'colofon' => [
-				'title' => __( 'Colofon', 'radio-rucphen' ),
-				'intro' => __( 'Colofon en ANBI-informatie van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
-				'sections' => [
-					[
+					),
+				),
+			),
+			'colofon'    => array(
+				'title'    => __( 'Colofon', 'radio-rucphen' ),
+				'intro'    => __( 'Colofon en ANBI-informatie van Radio Rucphen. Concepttekst. Definitieve juridische tekst wordt door de opdrachtgever aangeleverd en kan in deze pagina worden geplaatst.', 'radio-rucphen' ),
+				'sections' => array(
+					array(
 						'title' => __( 'Organisatie', 'radio-rucphen' ),
 						'body'  => sprintf(
 							"%s\nKvK: %s\nRSIN: %s\nIBAN: %s",
 							(string) ( $org['legal_name'] ?? 'Stichting Rucphen RTV' ),
-							(string) ( $org['kvk'] ?? 'TBD' ) ?: 'TBD',
-							(string) ( $org['rsin'] ?? 'TBD' ) ?: 'TBD',
-							(string) ( $org['iban'] ?? 'TBD' ) ?: 'TBD'
+							'' !== (string) ( $org['kvk'] ?? '' ) ? (string) $org['kvk'] : 'TBD',
+							'' !== (string) ( $org['rsin'] ?? '' ) ? (string) $org['rsin'] : 'TBD',
+							'' !== (string) ( $org['iban'] ?? '' ) ? (string) $org['iban'] : 'TBD'
 						),
-					],
-					[
+					),
+					array(
 						'title' => __( 'Contact', 'radio-rucphen' ),
 						'body'  => sprintf(
 							"Studio: %s\nRedactie: %s",
 							(string) ( $contact['email_studio'] ?? 'studio@radiorucphen.nl' ),
 							(string) ( $contact['email_redactie'] ?? 'redactie@radiorucphen.nl' )
 						),
-					],
-				],
-			],
-		];
+					),
+				),
+			),
+		);
 
 		$data = $pages[ $slug ] ?? $pages['privacy'];
 
@@ -2857,6 +3613,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render newsletter signup.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_newsletter_signup(): string {
 		$news = Settings::get( Settings::OPTION_NEWSLETTER );
 		$href = self::whatsapp_url( (string) ( $news['fallback_whatsapp_text'] ?? 'Zet mij op de nieuwsbrief-lijst' ) );
@@ -2877,6 +3638,11 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render newsletter cta.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_newsletter_cta(): string {
 		$news    = Settings::get( Settings::OPTION_NEWSLETTER );
 		$contact = Settings::get( Settings::OPTION_CONTACT );
@@ -2901,26 +3667,34 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
+	/**
+	 * Render program quick links.
+	 *
+	 * @return string Return value.
+	 */
 	public static function render_program_quick_links(): string {
 		$query = new \WP_Query(
-			[
+			array(
 				'post_type'      => PostTypes::PROGRAM,
 				'post_status'    => 'publish',
 				'posts_per_page' => 4,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Intentional meta query for theme content filtering or ordering.
 				'meta_key'       => '_rucphen_program_default_start',
 				'orderby'        => 'meta_value',
 				'order'          => 'ASC',
 				'no_found_rows'  => true,
-			]
+			)
 		);
 
 		ob_start();
 		?>
 		<section class="bg-surface py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
+				<?php // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Internal markup is escaped before assembly. ?>
 				<?php echo self::section_head( __( 'Snelle links', 'radio-rucphen' ), __( 'Vaste programma\'s direct bij de hand.', 'radio-rucphen' ) ); ?>
 				<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-					<?php foreach ( $query->posts as $post ) :
+					<?php
+					foreach ( $query->posts as $post ) :
 						$cover      = self::program_cover( $post );
 						$short      = (string) get_post_meta( $post->ID, '_rucphen_program_short_description', true );
 						$presenters = self::program_presenters( $post );
@@ -2930,10 +3704,10 @@ final class Blocks {
 								<img class="aspect-[16/9] w-full object-cover transition group-hover:scale-105" src="<?php echo esc_url( $cover ); ?>" loading="lazy" alt="<?php echo esc_attr( get_the_title( $post ) ); ?>">
 								<div class="grid gap-2 p-4">
 									<h3 class="font-display text-lg font-extrabold leading-tight text-ink"><?php echo esc_html( get_the_title( $post ) ); ?></h3>
-									<?php if ( $short !== '' ) : ?>
+									<?php if ( '' !== $short ) : ?>
 										<p class="text-sm text-ink-soft"><?php echo esc_html( $short ); ?></p>
 									<?php endif; ?>
-									<?php if ( $presenters !== '' ) : ?>
+									<?php if ( '' !== $presenters ) : ?>
 										<p class="text-xs font-bold uppercase tracking-wider text-brand"><?php echo esc_html( $presenters ); ?></p>
 									<?php endif; ?>
 								</div>

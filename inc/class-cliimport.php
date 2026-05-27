@@ -11,8 +11,16 @@ namespace RadioRucphen;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Handles CliImport functionality.
+ */
 final class CliImport {
 
+	/**
+	 * Registers hooks.
+	 *
+	 * @return void Return value.
+	 */
 	public static function register(): void {
 		if ( ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
 			return;
@@ -21,74 +29,59 @@ final class CliImport {
 		\WP_CLI::add_command(
 			'radio-rucphen',
 			self::class,
-			[ 'shortdesc' => 'Radio Rucphen importcommando\'s.' ]
+			array( 'shortdesc' => 'Radio Rucphen importcommando\'s.' )
 		);
 	}
 
 	/**
-	 * Importeer programma's met uitzendmomenten, presentatoren, events en nieuws uit de
-	 * huidige static site naar WordPress posts.
+	 * Import static.
 	 *
-	 * ## OPTIONS
-	 *
-	 * --source=<path>
-	 * : Pad naar de root van de static site (waar data/ en content/ in staan).
-	 *
-	 * [--dry-run]
-	 * : Loop alleen door en log; schrijf niets.
-	 *
-	 * ## EXAMPLES
-	 *
-	 *     wp radio-rucphen import-static --source=/var/www/static-site
-	 *
-	 * @subcommand import-static
-	 * @when after_wp_load
-	 *
-	 * @param array<int, string> $args
-	 * @param array<string, mixed> $assoc
+	 * @param array $args Args.
+	 * @param array $assoc Assoc.
+	 * @return void Return value.
 	 */
 	public function import_static( array $args, array $assoc ): void {
 		$source  = isset( $assoc['source'] ) ? (string) $assoc['source'] : '';
 		$dry_run = ! empty( $assoc['dry-run'] );
 
-		if ( $source === '' || ! is_dir( $source ) ) {
+		if ( '' === $source || ! is_dir( $source ) ) {
 			\WP_CLI::error( 'Geef --source=<path> naar een geldige static-site map.' );
 		}
 
-		$config_path   = $source . '/data/config.json';
-		$schedule_path = $source . '/data/schedule.json';
-		$djs_path      = $source . '/data/djs.json';
-		$events_path   = $source . '/data/events.json';
-		$podcasts_path = $source . '/data/podcasts.json';
-		$zwu_news_path = $source . '/data/external-news.json';
+		$config_path    = $source . '/data/config.json';
+		$schedule_path  = $source . '/data/schedule.json';
+		$djs_path       = $source . '/data/djs.json';
+		$events_path    = $source . '/data/events.json';
+		$podcasts_path  = $source . '/data/podcasts.json';
+		$zwu_news_path  = $source . '/data/external-news.json';
 		$zwu_video_path = $source . '/data/external-videos.json';
-		$nieuws_dir    = $source . '/content/nieuws';
-		$djs_content   = $source . '/content/djs';
+		$nieuws_dir     = $source . '/content/nieuws';
+		$djs_content    = $source . '/content/djs';
 
-		$config   = self::read_json( $config_path );
-		$schedule = self::read_json( $schedule_path );
-		$djs      = self::read_json( $djs_path );
-		$events   = self::read_json( $events_path );
-		$podcasts = self::read_json( $podcasts_path );
-		$zwu_news = self::read_json( $zwu_news_path );
+		$config     = self::read_json( $config_path );
+		$schedule   = self::read_json( $schedule_path );
+		$djs        = self::read_json( $djs_path );
+		$events     = self::read_json( $events_path );
+		$podcasts   = self::read_json( $podcasts_path );
+		$zwu_news   = self::read_json( $zwu_news_path );
 		$zwu_videos = self::read_json( $zwu_video_path );
 
 		\WP_CLI::log( 'Start import...' );
 
-		if ( $config !== null ) {
+		if ( null !== $config ) {
 			self::import_config( $config, $dry_run );
 		}
 
 		if ( is_array( $zwu_news ) || is_array( $zwu_videos ) ) {
-			self::import_zuidwest_caches( is_array( $zwu_news ) ? $zwu_news : [], is_array( $zwu_videos ) ? $zwu_videos : [], $dry_run );
+			self::import_zuidwest_caches( is_array( $zwu_news ) ? $zwu_news : array(), is_array( $zwu_videos ) ? $zwu_videos : array(), $dry_run );
 		}
 
-		$presenter_map = [];
+		$presenter_map = array();
 		if ( is_array( $djs ) ) {
 			$presenter_map = self::import_presenters( $djs, $djs_content, $dry_run );
 		}
 
-		$program_map = [];
+		$program_map = array();
 		if ( is_array( $schedule['programs'] ?? null ) ) {
 			$program_map = self::import_programs( (array) $schedule['programs'], $dry_run );
 		}
@@ -113,17 +106,27 @@ final class CliImport {
 	}
 
 	/**
-	 * @return mixed
+	 * Read json.
+	 *
+	 * @param string $path Path.
 	 */
 	private static function read_json( string $path ) {
 		if ( ! is_readable( $path ) ) {
 			return null;
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local import file read.
 		$json = (string) file_get_contents( $path );
 		$data = json_decode( $json, true );
 		return is_array( $data ) ? $data : null;
 	}
 
+	/**
+	 * Import config.
+	 *
+	 * @param array $config Config.
+	 * @param bool  $dry_run Dry run.
+	 * @return void Return value.
+	 */
 	private static function import_config( array $config, bool $dry_run ): void {
 		if ( $dry_run ) {
 			\WP_CLI::log( '  [dry] config.json -> options' );
@@ -131,29 +134,29 @@ final class CliImport {
 		}
 
 		if ( isset( $config['station'] ) && is_array( $config['station'] ) ) {
-			$current = Settings::get( Settings::OPTION_STATION );
+			$current            = Settings::get( Settings::OPTION_STATION );
 			$current['name']    = (string) ( $config['station']['name'] ?? $current['name'] );
 			$current['tagline'] = (string) ( $config['station']['tagline'] ?? $current['tagline'] );
 			update_option( Settings::OPTION_STATION, $current, false );
 		}
 
 		if ( isset( $config['stream']['url'] ) ) {
-			$current = Settings::get( Settings::OPTION_STREAM );
+			$current               = Settings::get( Settings::OPTION_STREAM );
 			$current['stream_url'] = (string) $config['stream']['url'];
 			update_option( Settings::OPTION_STREAM, $current, false );
 		}
 
 		if ( isset( $config['whatsapp'] ) && is_array( $config['whatsapp'] ) ) {
-			$current = Settings::get( Settings::OPTION_CONTACT );
+			$current                          = Settings::get( Settings::OPTION_CONTACT );
 			$current['whatsapp_number']       = (string) ( $config['whatsapp']['number'] ?? $current['whatsapp_number'] );
 			$current['whatsapp_default_text'] = (string) ( $config['whatsapp']['default_text'] ?? $current['whatsapp_default_text'] );
 			update_option( Settings::OPTION_CONTACT, $current, false );
 		}
 
 		if ( isset( $config['frequencies'] ) && is_array( $config['frequencies'] ) ) {
-			$current = Settings::get( Settings::OPTION_FREQUENCIES );
+			$current                   = Settings::get( Settings::OPTION_FREQUENCIES );
 			$current['fm_mhz']         = (string) ( $config['frequencies']['fm_mhz'] ?? $current['fm_mhz'] );
-			$dabs                      = $config['frequencies']['dab_blocks'] ?? [];
+			$dabs                      = $config['frequencies']['dab_blocks'] ?? array();
 			$current['dab_blocks']     = is_array( $dabs ) ? implode( ', ', array_map( 'strval', $dabs ) ) : $current['dab_blocks'];
 			$current['coverage']       = (string) ( $config['frequencies']['coverage'] ?? $current['coverage'] );
 			$current['cable_provider'] = (string) ( $config['frequencies']['cable']['provider'] ?? $current['cable_provider'] );
@@ -162,14 +165,14 @@ final class CliImport {
 		}
 
 		if ( isset( $config['contact'] ) && is_array( $config['contact'] ) ) {
-			$current = Settings::get( Settings::OPTION_CONTACT );
+			$current                   = Settings::get( Settings::OPTION_CONTACT );
 			$current['email_studio']   = (string) ( $config['contact']['email_studio'] ?? $current['email_studio'] );
 			$current['email_redactie'] = (string) ( $config['contact']['email_redactie'] ?? $current['email_redactie'] );
 			update_option( Settings::OPTION_CONTACT, $current, false );
 		}
 
 		if ( isset( $config['organization'] ) && is_array( $config['organization'] ) ) {
-			$current = Settings::get( Settings::OPTION_ORGANIZATION );
+			$current               = Settings::get( Settings::OPTION_ORGANIZATION );
 			$current['legal_name'] = (string) ( $config['organization']['legal_name'] ?? $current['legal_name'] );
 			$current['kvk']        = (string) ( $config['organization']['kvk'] ?? $current['kvk'] );
 			$current['rsin']       = (string) ( $config['organization']['rsin'] ?? $current['rsin'] );
@@ -182,33 +185,43 @@ final class CliImport {
 	}
 
 	/**
-	 * @return array<string, int> slug => post ID
+	 * Import presenters.
+	 *
+	 * @param array  $djs Djs.
+	 * @param string $content_dir Content dir.
+	 * @param bool   $dry_run Dry run.
+	 * @return array Return value.
 	 */
 	private static function import_presenters( array $djs, string $content_dir, bool $dry_run ): array {
-		$map = [];
+		$map = array();
 		foreach ( $djs as $dj ) {
 			if ( ! is_array( $dj ) ) {
 				continue;
 			}
 			$slug = (string) ( $dj['slug'] ?? '' );
-			if ( $slug === '' ) {
+			if ( '' === $slug ) {
 				continue;
 			}
 
 			$bio_path = $content_dir . '/' . $slug . '.md';
-			$bio      = is_readable( $bio_path ) ? (string) file_get_contents( $bio_path ) : '';
-			$bio      = self::strip_frontmatter( $bio );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local import file read.
+			$bio = is_readable( $bio_path ) ? (string) file_get_contents( $bio_path ) : '';
+			$bio = self::strip_frontmatter( $bio );
 
 			if ( $dry_run ) {
 				\WP_CLI::log( '  [dry] presenter: ' . $slug );
 				continue;
 			}
 
-			$post_id = self::upsert_by_slug( PostTypes::PRESENTER, $slug, [
-				'post_title'   => (string) ( $dj['name'] ?? $slug ),
-				'post_content' => $bio,
-				'post_status'  => 'publish',
-			] );
+			$post_id = self::upsert_by_slug(
+				PostTypes::PRESENTER,
+				$slug,
+				array(
+					'post_title'   => (string) ( $dj['name'] ?? $slug ),
+					'post_content' => $bio,
+					'post_status'  => 'publish',
+				)
+			);
 
 			if ( $post_id > 0 ) {
 				update_post_meta( $post_id, '_rucphen_presenter_tagline', (string) ( $dj['tagline'] ?? '' ) );
@@ -222,17 +235,20 @@ final class CliImport {
 	}
 
 	/**
-	 * @param array<int, array<string, mixed>> $programs
-	 * @return array<string, int> slug => post ID
+	 * Import programs.
+	 *
+	 * @param array $programs Programs.
+	 * @param bool  $dry_run Dry run.
+	 * @return array Return value.
 	 */
 	private static function import_programs( array $programs, bool $dry_run ): array {
-		$map = [];
+		$map = array();
 		foreach ( $programs as $p ) {
 			if ( ! is_array( $p ) ) {
 				continue;
 			}
 			$slug = (string) ( $p['slug'] ?? '' );
-			if ( $slug === '' ) {
+			if ( '' === $slug ) {
 				continue;
 			}
 
@@ -241,12 +257,16 @@ final class CliImport {
 				continue;
 			}
 
-			$post_id = self::upsert_by_slug( PostTypes::PROGRAM, $slug, [
-				'post_title'   => (string) ( $p['title'] ?? $slug ),
-				'post_content' => (string) ( $p['long_description'] ?? $p['description'] ?? '' ),
-				'post_excerpt' => (string) ( $p['description'] ?? '' ),
-				'post_status'  => 'publish',
-			] );
+			$post_id = self::upsert_by_slug(
+				PostTypes::PROGRAM,
+				$slug,
+				array(
+					'post_title'   => (string) ( $p['title'] ?? $slug ),
+					'post_content' => (string) ( $p['long_description'] ?? $p['description'] ?? '' ),
+					'post_excerpt' => (string) ( $p['description'] ?? '' ),
+					'post_status'  => 'publish',
+				)
+			);
 
 			if ( $post_id > 0 ) {
 				update_post_meta( $post_id, '_rucphen_program_short_description', (string) ( $p['description'] ?? '' ) );
@@ -261,14 +281,18 @@ final class CliImport {
 	}
 
 	/**
-	 * @param array<string, array<int, array<string, mixed>>> $weekly
-	 * @param array<string, int> $program_map
-	 * @param array<string, int> $presenter_map
+	 * Import program airtimes.
+	 *
+	 * @param array $weekly Weekly.
+	 * @param array $program_map Program map.
+	 * @param array $presenter_map Presenter map.
+	 * @param bool  $dry_run Dry run.
+	 * @return void Return value.
 	 */
 	private static function import_program_airtimes( array $weekly, array $program_map, array $presenter_map, bool $dry_run ): void {
-		$count = 0;
-		$airtimes_by_program = [];
-		$presenters_by_program = [];
+		$count                 = 0;
+		$airtimes_by_program   = array();
+		$presenters_by_program = array();
 
 		foreach ( $weekly as $day => $slots ) {
 			if ( ! is_array( $slots ) ) {
@@ -289,28 +313,28 @@ final class CliImport {
 					continue;
 				}
 
-				$airtimes_by_program[ $program_id ][] = [
+				$airtimes_by_program[ $program_id ][] = array(
 					'day'   => sanitize_key( (string) $day ),
 					'start' => (string) ( $slot['from'] ?? '' ),
 					'end'   => (string) ( $slot['to'] ?? '' ),
-				];
+				);
 
-				foreach ( (array) ( $slot['dj_slugs'] ?? [] ) as $s ) {
+				foreach ( (array) ( $slot['dj_slugs'] ?? array() ) as $s ) {
 					$pid = $presenter_map[ (string) $s ] ?? 0;
 					if ( $pid > 0 ) {
 						$presenters_by_program[ $program_id ][ $pid ] = $pid;
 					}
 				}
-				$count++;
+				++$count;
 			}
 		}
 
 		foreach ( $airtimes_by_program as $program_id => $airtimes ) {
 			$airtimes = Meta::sanitize_airtimes( $airtimes );
 			update_post_meta( (int) $program_id, '_rucphen_program_airtimes', $airtimes );
-			update_post_meta( (int) $program_id, '_rucphen_program_presenter_ids', array_values( $presenters_by_program[ $program_id ] ?? [] ) );
+			update_post_meta( (int) $program_id, '_rucphen_program_presenter_ids', array_values( $presenters_by_program[ $program_id ] ?? array() ) );
 
-			if ( $airtimes !== [] ) {
+			if ( array() !== $airtimes ) {
 				update_post_meta( (int) $program_id, '_rucphen_program_default_start', $airtimes[0]['start'] );
 				update_post_meta( (int) $program_id, '_rucphen_program_default_end', $airtimes[0]['end'] );
 			}
@@ -320,7 +344,11 @@ final class CliImport {
 	}
 
 	/**
-	 * @param array<int, array<string, mixed>> $events
+	 * Import events.
+	 *
+	 * @param array $events Events.
+	 * @param bool  $dry_run Dry run.
+	 * @return void Return value.
 	 */
 	private static function import_events( array $events, bool $dry_run ): void {
 		$count = 0;
@@ -330,7 +358,7 @@ final class CliImport {
 			}
 			$title = (string) ( $e['title'] ?? '' );
 			$slug  = sanitize_title( $title . '-' . substr( (string) ( $e['start'] ?? '' ), 0, 10 ) );
-			if ( $slug === '' ) {
+			if ( '' === $slug ) {
 				continue;
 			}
 
@@ -339,18 +367,22 @@ final class CliImport {
 				continue;
 			}
 
-			$post_id = self::upsert_by_slug( PostTypes::EVENT, $slug, [
-				'post_title'   => $title,
-				'post_content' => (string) ( $e['description'] ?? '' ),
-				'post_status'  => 'publish',
-			] );
+			$post_id = self::upsert_by_slug(
+				PostTypes::EVENT,
+				$slug,
+				array(
+					'post_title'   => $title,
+					'post_content' => (string) ( $e['description'] ?? '' ),
+					'post_status'  => 'publish',
+				)
+			);
 
 			if ( $post_id > 0 ) {
 				update_post_meta( $post_id, '_rucphen_event_start', (string) ( $e['start'] ?? '' ) );
 				update_post_meta( $post_id, '_rucphen_event_end', (string) ( $e['end'] ?? '' ) );
 				update_post_meta( $post_id, '_rucphen_event_location', (string) ( $e['location'] ?? '' ) );
 				update_post_meta( $post_id, '_rucphen_event_url', (string) ( $e['url'] ?? '' ) );
-				$count++;
+				++$count;
 			}
 		}
 
@@ -358,8 +390,13 @@ final class CliImport {
 	}
 
 	/**
-	 * @param array<int, array<string, mixed>> $podcasts
-	 * @param array<string, int> $program_map
+	 * Import podcasts.
+	 *
+	 * @param array  $podcasts Podcasts.
+	 * @param string $source Source.
+	 * @param array  $program_map Program map.
+	 * @param bool   $dry_run Dry run.
+	 * @return void Return value.
 	 */
 	private static function import_podcasts( array $podcasts, string $source, array $program_map, bool $dry_run ): void {
 		$count = 0;
@@ -369,15 +406,16 @@ final class CliImport {
 			}
 
 			$slug = sanitize_title( (string) ( $podcast['slug'] ?? '' ) );
-			if ( $slug === '' ) {
+			if ( '' === $slug ) {
 				continue;
 			}
 
 			$description_path = (string) ( $podcast['description_md'] ?? '' );
-			$body = '';
-			if ( $description_path !== '' ) {
+			$body             = '';
+			if ( '' !== $description_path ) {
 				$file = rtrim( $source, '/' ) . '/' . ltrim( $description_path, '/' );
 				if ( is_readable( $file ) ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local import file read.
 					$body = trim( (string) file_get_contents( $file ) );
 				}
 			}
@@ -391,12 +429,12 @@ final class CliImport {
 				continue;
 			}
 
-			$postarr = [
+			$postarr = array(
 				'post_title'   => (string) ( $podcast['title'] ?? $slug ),
 				'post_content' => $body,
 				'post_excerpt' => wp_trim_words( wp_strip_all_tags( $body ), 28, '...' ),
 				'post_status'  => 'publish',
-			];
+			);
 			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
 				$postarr['post_date'] = $date . ' 12:00:00';
 			}
@@ -408,8 +446,8 @@ final class CliImport {
 				update_post_meta( $post_id, '_rucphen_podcast_date', $date );
 				update_post_meta( $post_id, '_rucphen_podcast_duration_seconds', (int) ( $podcast['duration_seconds'] ?? 0 ) );
 				update_post_meta( $post_id, '_rucphen_podcast_audio_url', self::static_source_url( $source, (string) ( $podcast['audio_url'] ?? '' ) ) );
-				update_post_meta( $post_id, '_rucphen_podcast_tracks', Meta::sanitize_podcast_tracks( $podcast['tracks'] ?? [] ) );
-				$count++;
+				update_post_meta( $post_id, '_rucphen_podcast_tracks', Meta::sanitize_podcast_tracks( $podcast['tracks'] ?? array() ) );
+				++$count;
 			}
 		}
 
@@ -417,8 +455,12 @@ final class CliImport {
 	}
 
 	/**
-	 * @param array<int, array<string, mixed>> $news
-	 * @param array<int, array<string, mixed>> $videos
+	 * Import zuidwest caches.
+	 *
+	 * @param array $news News.
+	 * @param array $videos Videos.
+	 * @param bool  $dry_run Dry run.
+	 * @return void Return value.
 	 */
 	private static function import_zuidwest_caches( array $news, array $videos, bool $dry_run ): void {
 		if ( $dry_run ) {
@@ -426,10 +468,10 @@ final class CliImport {
 			return;
 		}
 
-		if ( $news !== [] ) {
+		if ( array() !== $news ) {
 			update_option( ZuidwestImporter::OPTION_NEWS_CACHE, self::normalize_zuidwest_items( $news, 'standard' ), false );
 		}
-		if ( $videos !== [] ) {
+		if ( array() !== $videos ) {
 			update_option( ZuidwestImporter::OPTION_VIDEOS_CACHE, self::normalize_zuidwest_items( $videos, 'video' ), false );
 		}
 		update_option( ZuidwestImporter::OPTION_LAST_SUCCESS, gmdate( 'c' ), false );
@@ -438,17 +480,20 @@ final class CliImport {
 	}
 
 	/**
-	 * @param array<int, array<string, mixed>> $items
-	 * @return array<int, array<string, mixed>>
+	 * Normalize zuidwest items.
+	 *
+	 * @param array  $items Items.
+	 * @param string $format Format.
+	 * @return array Return value.
 	 */
 	private static function normalize_zuidwest_items( array $items, string $format ): array {
-		$normalized = [];
+		$normalized = array();
 		foreach ( $items as $item ) {
 			if ( ! is_array( $item ) ) {
 				continue;
 			}
 
-			$normalized[] = [
+			$normalized[] = array(
 				'source_id'       => (string) ( $item['source_id'] ?? $item['id'] ?? '' ),
 				'source_name'     => (string) ( $item['source_name'] ?? 'Zuidwest Update' ),
 				'source_url'      => (string) ( $item['source_url'] ?? '' ),
@@ -460,12 +505,19 @@ final class CliImport {
 				'video_embed_url' => $item['video_embed_url'] ?? null,
 				'region_slug'     => (string) ( $item['region_slug'] ?? '' ),
 				'region_label'    => (string) ( $item['region_label'] ?? $item['region_name'] ?? '' ),
-			];
+			);
 		}
 
 		return $normalized;
 	}
 
+	/**
+	 * Import news posts.
+	 *
+	 * @param string $dir Dir.
+	 * @param bool   $dry_run Dry run.
+	 * @return void Return value.
+	 */
 	private static function import_news_posts( string $dir, bool $dry_run ): void {
 		$files = glob( $dir . '/*.md' );
 		if ( ! is_array( $files ) ) {
@@ -476,7 +528,8 @@ final class CliImport {
 		foreach ( $files as $file ) {
 			$base = basename( $file, '.md' );
 			$slug = sanitize_title( $base );
-			$raw  = (string) file_get_contents( $file );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local import file read.
+			$raw = (string) file_get_contents( $file );
 
 			[ $front, $body ] = self::split_frontmatter( $raw );
 
@@ -485,18 +538,22 @@ final class CliImport {
 				continue;
 			}
 
-			$post_id = self::upsert_by_slug( 'post', $slug, [
-				'post_title'   => (string) ( $front['title'] ?? $base ),
-				'post_content' => $body,
-				'post_status'  => 'publish',
-				'post_date'    => isset( $front['date'] ) ? (string) $front['date'] : '',
-				'post_excerpt' => (string) ( $front['excerpt'] ?? '' ),
-			] );
+			$post_id = self::upsert_by_slug(
+				'post',
+				$slug,
+				array(
+					'post_title'   => (string) ( $front['title'] ?? $base ),
+					'post_content' => $body,
+					'post_status'  => 'publish',
+					'post_date'    => isset( $front['date'] ) ? (string) $front['date'] : '',
+					'post_excerpt' => (string) ( $front['excerpt'] ?? '' ),
+				)
+			);
 
 			if ( $post_id > 0 ) {
 				update_post_meta( $post_id, '_rucphen_news_source', 'redactie' );
 				update_post_meta( $post_id, '_rucphen_news_cover', self::static_source_url( dirname( $dir, 2 ), (string) ( $front['cover'] ?? '' ) ) );
-				$count++;
+				++$count;
 			}
 		}
 
@@ -504,17 +561,22 @@ final class CliImport {
 	}
 
 	/**
-	 * @param array<string, mixed> $postarr
+	 * Upsert by slug.
+	 *
+	 * @param string $post_type Post type.
+	 * @param string $slug Slug.
+	 * @param array  $postarr Postarr.
+	 * @return int Return value.
 	 */
 	private static function upsert_by_slug( string $post_type, string $slug, array $postarr ): int {
 		$existing = get_posts(
-			[
+			array(
 				'post_type'      => $post_type,
 				'name'           => $slug,
 				'post_status'    => 'any',
 				'posts_per_page' => 1,
 				'fields'         => 'ids',
-			]
+			)
 		);
 
 		$postarr['post_type'] = $post_type;
@@ -528,9 +590,16 @@ final class CliImport {
 		return (int) wp_insert_post( $postarr );
 	}
 
+	/**
+	 * Static source url.
+	 *
+	 * @param string $source Source.
+	 * @param string $path Path.
+	 * @return string Return value.
+	 */
 	private static function static_source_url( string $source, string $path ): string {
 		$path = trim( $path );
-		if ( $path === '' || ! str_starts_with( $path, '/' ) ) {
+		if ( '' === $path || ! str_starts_with( $path, '/' ) ) {
 			return $path;
 		}
 
@@ -549,36 +618,46 @@ final class CliImport {
 		return home_url( trailingslashit( $relative ) . ltrim( $path, '/' ) );
 	}
 
+	/**
+	 * Strip frontmatter.
+	 *
+	 * @param string $body Body.
+	 * @return string Return value.
+	 */
 	private static function strip_frontmatter( string $body ): string {
 		[ , $rest ] = self::split_frontmatter( $body );
 		return $rest;
 	}
 
 	/**
-	 * @return array{0: array<string, string>, 1: string}
+	 * Split frontmatter.
+	 *
+	 * @param string $body Body.
+	 * @return array Return value.
 	 */
 	private static function split_frontmatter( string $body ): array {
-		if ( strncmp( $body, "---\n", 4 ) !== 0 ) {
-			return [ [], $body ];
+		if ( 0 !== strncmp( $body, "---\n", 4 ) ) {
+			return array( array(), $body );
 		}
 
 		$end = strpos( $body, "\n---", 4 );
-		if ( $end === false ) {
-			return [ [], $body ];
+		if ( false === $end ) {
+			return array( array(), $body );
 		}
 
 		$front_raw = substr( $body, 4, $end - 4 );
 		$rest      = trim( substr( $body, $end + 4 ) );
 
-		$front = [];
-		foreach ( preg_split( '/\R/', $front_raw ) ?: [] as $line ) {
-			if ( strpos( $line, ':' ) === false ) {
+		$front       = array();
+		$front_lines = preg_split( '/\R/', $front_raw );
+		foreach ( false !== $front_lines ? $front_lines : array() as $line ) {
+			if ( false === strpos( $line, ':' ) ) {
 				continue;
 			}
-			[ $k, $v ]   = explode( ':', $line, 2 );
+			[ $k, $v ]           = explode( ':', $line, 2 );
 			$front[ trim( $k ) ] = trim( $v, " \t\"'" );
 		}
 
-		return [ $front, $rest ];
+		return array( $front, $rest );
 	}
 }
