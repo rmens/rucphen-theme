@@ -24,14 +24,20 @@ final class Blocks {
 	private const SECTION_SUBTITLE = 'mt-[0.45rem] text-ink-soft';
 	private const SECTION_ACTION = 'inline-flex min-h-11 w-fit items-center rounded-sm border border-[#c9d7ec] bg-white px-[0.95rem] py-[0.55rem] text-[0.95rem] font-extrabold text-brand no-underline hover:bg-[#e9eef7] hover:text-brand-dark';
 	private const LIVE_DOT = 'size-[0.55rem] animate-pulse rounded-full bg-success shadow-[0_0_0_0_rgb(22_163_74_/_0.58)]';
+	private const TEMPLATE_ONLY_BLOCKS = [ 'template-main', 'page-hero', 'breadcrumbs', 'hero-text' ];
+	private static $zuidwest_modal_printed = false;
 
 	public static function register(): void {
 		add_action( 'init', [ self::class, 'register_blocks' ] );
+		add_filter( 'allowed_block_types_all', [ self::class, 'filter_allowed_block_types' ], 10, 2 );
 	}
 
 	public static function register_blocks(): void {
 		$blocks = [
 			'template-main'       => [ self::class, 'render_template_main' ],
+			'page-hero'           => [ self::class, 'render_page_hero' ],
+			'breadcrumbs'         => [ self::class, 'render_breadcrumbs' ],
+			'hero-text'           => [ self::class, 'render_hero_text' ],
 			'site-header'         => [ self::class, 'render_site_header' ],
 			'site-footer'         => [ self::class, 'render_site_footer' ],
 			'live-hero'           => [ self::class, 'render_live_hero' ],
@@ -51,12 +57,14 @@ final class Blocks {
 			'events-grid'         => [ self::class, 'render_events_grid' ],
 			'events-archive'      => [ self::class, 'render_events_archive' ],
 			'frequency-grid'      => [ self::class, 'render_frequency_grid' ],
-			'frequency-page'      => [ self::class, 'render_frequency_page' ],
+			'frequency-options'   => [ self::class, 'render_frequency_options' ],
 			'whatsapp-cta'        => [ self::class, 'render_whatsapp_cta' ],
-			'contact-page'        => [ self::class, 'render_contact_page' ],
-			'about-page'          => [ self::class, 'render_about_page' ],
-			'legal-page'          => [ self::class, 'render_legal_page' ],
-			'newsletter-page'     => [ self::class, 'render_newsletter_page' ],
+			'contact-details'     => [ self::class, 'render_contact_details' ],
+			'about-story'         => [ self::class, 'render_about_story' ],
+			'about-board'         => [ self::class, 'render_about_board' ],
+			'about-anbi'          => [ self::class, 'render_about_anbi' ],
+			'legal-content'       => [ self::class, 'render_legal_content' ],
+			'newsletter-signup'   => [ self::class, 'render_newsletter_signup' ],
 			'newsletter-cta'      => [ self::class, 'render_newsletter_cta' ],
 			'program-quick-links' => [ self::class, 'render_program_quick_links' ],
 		];
@@ -67,12 +75,13 @@ final class Blocks {
 			$args = [
 				'api_version'     => 3,
 				'title'           => $titles[ $name ] ?? ucfirst( str_replace( '-', ' ', $name ) ),
-				'category'        => str_starts_with( $name, 'site-' ) || $name === 'template-main' ? 'theme' : 'radio-rucphen',
+				'category'        => str_starts_with( $name, 'site-' ) || in_array( $name, [ 'template-main', 'page-hero', 'breadcrumbs', 'hero-text' ], true ) ? 'theme' : 'radio-rucphen',
 				'icon'            => 'microphone',
 				'description'     => sprintf( __( 'Radio Rucphen: %s.', 'radio-rucphen' ), $titles[ $name ] ?? $name ),
 				'supports'        => [
-					'html'  => false,
-					'align' => false,
+					'html'     => false,
+					'align'    => false,
+					'inserter' => ! in_array( $name, self::TEMPLATE_ONLY_BLOCKS, true ),
 				],
 				'render_callback' => $callback,
 			];
@@ -86,6 +95,33 @@ final class Blocks {
 				];
 			}
 
+			if ( $name === 'page-hero' ) {
+				$args['attributes'] = [
+					'fallbackImage' => [
+						'type'    => 'string',
+						'default' => '',
+					],
+				];
+			}
+
+			if ( $name === 'breadcrumbs' ) {
+				$args['attributes'] = [
+					'variant' => [
+						'type'    => 'string',
+						'default' => 'hero',
+					],
+				];
+			}
+
+			if ( $name === 'hero-text' ) {
+				$args['attributes'] = [
+					'fallbackText' => [
+						'type'    => 'string',
+						'default' => '',
+					],
+				];
+			}
+
 			register_block_type(
 				self::NAMESPACE . '/' . $name,
 				$args
@@ -94,11 +130,37 @@ final class Blocks {
 	}
 
 	/**
+	 * @param bool|array<int, string> $allowed_block_types
+	 * @param mixed $block_editor_context
+	 * @return bool|array<int, string>
+	 */
+	public static function filter_allowed_block_types( $allowed_block_types, $block_editor_context = null ) {
+		if ( $allowed_block_types === false ) {
+			return false;
+		}
+
+		$template_only_blocks = array_map(
+			static fn( string $block ): string => self::NAMESPACE . '/' . $block,
+			self::TEMPLATE_ONLY_BLOCKS
+		);
+
+		if ( is_array( $allowed_block_types ) ) {
+			return array_values( array_diff( $allowed_block_types, $template_only_blocks ) );
+		}
+
+		$registered_blocks = array_keys( \WP_Block_Type_Registry::get_instance()->get_all_registered() );
+		return array_values( array_diff( $registered_blocks, $template_only_blocks ) );
+	}
+
+	/**
 	 * @return array<string, string>
 	 */
 	private static function block_titles(): array {
 		return [
 			'template-main'       => __( 'Template main', 'radio-rucphen' ),
+			'page-hero'           => __( 'Pagina hero', 'radio-rucphen' ),
+			'breadcrumbs'         => __( 'Broodkruimels', 'radio-rucphen' ),
+			'hero-text'           => __( 'Hero-tekst', 'radio-rucphen' ),
 			'site-header'         => __( 'Site header', 'radio-rucphen' ),
 			'site-footer'         => __( 'Site footer', 'radio-rucphen' ),
 			'live-hero'           => __( 'Live hero', 'radio-rucphen' ),
@@ -118,12 +180,14 @@ final class Blocks {
 			'events-grid'         => __( 'Agenda', 'radio-rucphen' ),
 			'events-archive'      => __( 'Agenda archief', 'radio-rucphen' ),
 			'frequency-grid'      => __( 'Frequenties', 'radio-rucphen' ),
-			'frequency-page'      => __( 'Frequenties pagina', 'radio-rucphen' ),
+			'frequency-options'   => __( 'Luisteropties', 'radio-rucphen' ),
 			'whatsapp-cta'        => __( 'WhatsApp verzoekje CTA', 'radio-rucphen' ),
-			'contact-page'        => __( 'Contact pagina', 'radio-rucphen' ),
-			'about-page'          => __( 'Over ons pagina', 'radio-rucphen' ),
-			'legal-page'          => __( 'Juridische pagina', 'radio-rucphen' ),
-			'newsletter-page'     => __( 'Nieuwsbrief pagina', 'radio-rucphen' ),
+			'contact-details'     => __( 'Contactgegevens', 'radio-rucphen' ),
+			'about-story'         => __( 'Over ons verhaal', 'radio-rucphen' ),
+			'about-board'         => __( 'Bestuur', 'radio-rucphen' ),
+			'about-anbi'          => __( 'ANBI gegevens', 'radio-rucphen' ),
+			'legal-content'       => __( 'Juridische inhoud', 'radio-rucphen' ),
+			'newsletter-signup'   => __( 'Nieuwsbrief aanmelden', 'radio-rucphen' ),
 			'newsletter-cta'      => __( 'Nieuwsbrief CTA', 'radio-rucphen' ),
 			'program-quick-links' => __( 'Snelle programma-links', 'radio-rucphen' ),
 		];
@@ -149,8 +213,275 @@ final class Blocks {
 		);
 	}
 
+	/**
+	 * @param array<string, mixed> $attributes
+	 */
+	public static function render_page_hero( array $attributes = [], string $content = '' ): string {
+		$content = trim( $content );
+		$fallback = (string) ( $attributes['fallbackImage'] ?? '' );
+		$background = self::page_hero_background( $fallback );
+		$classes = 'relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand py-16 text-white';
+		$style = '';
+
+		if ( $background !== '' ) {
+			$classes .= ' bg-[image:var(--hero-bg)] bg-cover bg-center';
+			$style = "--hero-bg:url('" . esc_url( $background ) . "')";
+		}
+
+		ob_start();
+		?>
+		<section class="<?php echo esc_attr( $classes ); ?>"<?php if ( $style !== '' ) : ?> style="<?php echo esc_attr( $style ); ?>"<?php endif; ?> data-component="page-hero">
+			<?php if ( $background !== '' ) : ?>
+				<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
+			<?php endif; ?>
+			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
+				<div class="max-w-[760px] [&_.wp-block-post-title]:m-0 [&_.wp-block-post-title]:font-display [&_.wp-block-post-title]:text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] [&_.wp-block-post-title]:font-extrabold [&_.wp-block-post-title]:leading-[1.08] [&_.wp-block-query-title]:m-0 [&_.wp-block-query-title]:font-display [&_.wp-block-query-title]:text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] [&_.wp-block-query-title]:font-extrabold [&_.wp-block-query-title]:leading-[1.08] [&_.wp-block-heading]:m-0 [&_.wp-block-heading]:font-display [&_.wp-block-heading]:text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] [&_.wp-block-heading]:font-extrabold [&_.wp-block-heading]:leading-[1.08]">
+					<?php echo $content; ?>
+				</div>
+			</div>
+		</section>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	public static function render_breadcrumbs( array $attributes = [] ): string {
+		$items = self::breadcrumb_items();
+		if ( count( $items ) < 2 ) {
+			return '';
+		}
+
+		$variant = (string) ( $attributes['variant'] ?? 'hero' );
+		$is_plain = $variant === 'plain';
+		$nav_class = $is_plain
+			? 'mb-6 text-sm font-bold text-ink-soft'
+			: 'mb-[0.9rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]';
+		$link_class = $is_plain
+			? 'text-brand no-underline hover:underline'
+			: 'text-[#bfdbfe] no-underline hover:text-white';
+		$separator_class = $is_plain ? 'text-ink-soft/50' : 'text-white/50';
+
+		ob_start();
+		?>
+		<nav class="<?php echo esc_attr( $nav_class ); ?>" aria-label="<?php esc_attr_e( 'Broodkruimels', 'radio-rucphen' ); ?>" data-component="breadcrumbs">
+			<ol class="m-0 flex list-none flex-wrap items-center gap-2 p-0">
+				<?php foreach ( $items as $index => $item ) : ?>
+					<li class="m-0 flex items-center gap-2 p-0">
+						<?php if ( $index > 0 ) : ?><span class="<?php echo esc_attr( $separator_class ); ?>" aria-hidden="true">/</span><?php endif; ?>
+						<?php if ( ! empty( $item['url'] ) && $index !== array_key_last( $items ) ) : ?>
+							<a class="<?php echo esc_attr( $link_class ); ?>" href="<?php echo esc_url( $item['url'] ); ?>"><?php echo esc_html( $item['label'] ); ?></a>
+						<?php else : ?>
+							<span aria-current="page"><?php echo esc_html( $item['label'] ); ?></span>
+						<?php endif; ?>
+					</li>
+				<?php endforeach; ?>
+			</ol>
+		</nav>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	public static function render_hero_text( array $attributes = [] ): string {
+		$text = self::hero_text();
+		if ( $text === '' ) {
+			$text = trim( (string) ( $attributes['fallbackText'] ?? '' ) );
+		}
+
+		if ( $text === '' ) {
+			return '';
+		}
+
+		$paragraphs = preg_split( '/\R{2,}/', str_replace( [ "\r\n", "\r" ], "\n", $text ) );
+		$paragraphs = array_values( array_filter( array_map( 'trim', is_array( $paragraphs ) ? $paragraphs : [] ) ) );
+
+		if ( $paragraphs === [] ) {
+			return '';
+		}
+
+		$output = '';
+		foreach ( $paragraphs as $paragraph ) {
+			$output .= '<p>' . esc_html( $paragraph ) . '</p>';
+		}
+
+		return sprintf(
+			'<div class="%s" data-component="hero-text">%s</div>',
+			esc_attr( 'mt-4 max-w-[720px] text-[1.18rem] leading-7 text-[#e2e8f0] [&_p]:m-0 [&_p+p]:mt-3' ),
+			$output
+		);
+	}
+
 	private static function theme_img( string $rel ): string {
 		return RUCPHEN_THEME_URI . 'assets/img/' . ltrim( $rel, '/' );
+	}
+
+	private static function page_hero_background( string $fallback ): string {
+		$post_id = self::hero_source_post_id();
+		if ( $post_id > 0 && has_post_thumbnail( $post_id ) ) {
+			$thumbnail = get_the_post_thumbnail_url( $post_id, 'full' );
+			if ( is_string( $thumbnail ) && $thumbnail !== '' ) {
+				return $thumbnail;
+			}
+		}
+
+		if ( preg_match( '#^https?://#i', $fallback ) ) {
+			return $fallback;
+		}
+
+		if ( $fallback !== '' ) {
+			return self::theme_img( $fallback );
+		}
+
+		return '';
+	}
+
+	private static function hero_text(): string {
+		$post_id = self::hero_source_post_id();
+		if ( $post_id > 0 ) {
+			$text = trim( (string) get_post_meta( $post_id, Meta::HERO_TEXT_META, true ) );
+			if ( $text !== '' ) {
+				return $text;
+			}
+
+			$excerpt = trim( wp_strip_all_tags( get_the_excerpt( $post_id ) ) );
+			if ( $excerpt !== '' ) {
+				return $excerpt;
+			}
+		}
+
+		if ( is_archive() ) {
+			return trim( wp_strip_all_tags( get_the_archive_description() ) );
+		}
+
+		return '';
+	}
+
+	private static function hero_source_post_id(): int {
+		if ( is_singular() ) {
+			return (int) get_queried_object_id();
+		}
+
+		if ( is_home() ) {
+			return (int) get_option( 'page_for_posts' );
+		}
+
+		if ( is_post_type_archive() ) {
+			return self::archive_page_id();
+		}
+
+		return 0;
+	}
+
+	private static function archive_page_id(): int {
+		$post_type = get_query_var( 'post_type' );
+		$post_type = is_array( $post_type ) ? reset( $post_type ) : $post_type;
+		$post_type_object = is_string( $post_type ) ? get_post_type_object( $post_type ) : null;
+		if ( ! $post_type_object ) {
+			return 0;
+		}
+
+		$rewrite = is_array( $post_type_object->rewrite ) ? $post_type_object->rewrite : [];
+		$archive_slug = is_string( $post_type_object->has_archive ) && $post_type_object->has_archive !== ''
+			? $post_type_object->has_archive
+			: (string) ( $rewrite['slug'] ?? $post_type );
+		$page = get_page_by_path( trim( $archive_slug, '/' ) );
+
+		return $page instanceof \WP_Post ? (int) $page->ID : 0;
+	}
+
+	/**
+	 * @return array<int, array{label:string,url:string}>
+	 */
+	private static function breadcrumb_items(): array {
+		$items = [
+			[
+				'label' => __( 'Home', 'radio-rucphen' ),
+				'url'   => home_url( '/' ),
+			],
+		];
+
+		if ( is_front_page() ) {
+			return $items;
+		}
+
+		if ( is_home() ) {
+			$page_for_posts = (int) get_option( 'page_for_posts' );
+			$items[] = [
+				'label' => $page_for_posts > 0 ? get_the_title( $page_for_posts ) : __( 'Nieuws', 'radio-rucphen' ),
+				'url'   => '',
+			];
+			return $items;
+		}
+
+		if ( is_page() ) {
+			$page = get_queried_object();
+			if ( $page instanceof \WP_Post ) {
+				$ancestors = array_reverse( get_post_ancestors( $page ) );
+				foreach ( $ancestors as $ancestor_id ) {
+					$items[] = [
+						'label' => get_the_title( $ancestor_id ),
+						'url'   => get_permalink( $ancestor_id ),
+					];
+				}
+				$items[] = [
+					'label' => get_the_title( $page ),
+					'url'   => '',
+				];
+			}
+			return $items;
+		}
+
+		if ( is_singular() ) {
+			$post = get_queried_object();
+			if ( $post instanceof \WP_Post ) {
+				$post_type = get_post_type_object( $post->post_type );
+				if ( $post_type && ! empty( $post_type->has_archive ) ) {
+					$items[] = [
+						'label' => (string) $post_type->labels->name,
+						'url'   => get_post_type_archive_link( $post->post_type ) ?: '',
+					];
+				}
+				$items[] = [
+					'label' => get_the_title( $post ),
+					'url'   => '',
+				];
+			}
+			return $items;
+		}
+
+		if ( is_post_type_archive() ) {
+			$post_type = get_query_var( 'post_type' );
+			$post_type = is_array( $post_type ) ? reset( $post_type ) : $post_type;
+			$post_type_object = is_string( $post_type ) ? get_post_type_object( $post_type ) : null;
+			$items[] = [
+				'label' => $post_type_object ? (string) $post_type_object->labels->name : wp_strip_all_tags( get_the_archive_title() ),
+				'url'   => '',
+			];
+			return $items;
+		}
+
+		if ( is_archive() ) {
+			$items[] = [
+				'label' => wp_strip_all_tags( get_the_archive_title() ),
+				'url'   => '',
+			];
+			return $items;
+		}
+
+		if ( is_search() ) {
+			$items[] = [
+				'label' => __( 'Zoeken', 'radio-rucphen' ),
+				'url'   => '',
+			];
+			return $items;
+		}
+
+		if ( is_404() ) {
+			$items[] = [
+				'label' => __( 'Pagina niet gevonden', 'radio-rucphen' ),
+				'url'   => '',
+			];
+		}
+
+		return $items;
 	}
 
 	private static function program_cover( \WP_Post $program ): string {
@@ -1031,18 +1362,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'programs/muziek-cafe.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Radio luisteren', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'DJ\'s en presentatoren', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Maak kennis met de stemmen van Radio Rucphen.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="grid grid-cols-4 gap-5 max-[1023px]:grid-cols-2 max-[767px]:grid-cols-1">
@@ -1140,18 +1459,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'programs/lunchradio.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Gemist', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Gemiste uitzendingen', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Luister eerdere uitzendingen terug. Een podcast-player pauzeert de live-stream.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16" data-component="podcast-archive">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<nav class="mb-6 flex flex-wrap gap-2" aria-label="<?php esc_attr_e( 'Filter podcasts op programma', 'radio-rucphen' ); ?>">
@@ -1474,18 +1781,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'programs/drivetime.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Radio luisteren', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Programmagids', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Bekijk per dag welke programma\'s er op Radio Rucphen te horen zijn.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16" data-component="program-guide">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<nav class="my-[1.4rem] flex flex-wrap gap-2" aria-label="<?php esc_attr_e( 'Dagen', 'radio-rucphen' ); ?>">
@@ -1766,6 +2061,7 @@ final class Blocks {
 			}
 
 			$cards[] = [
+				'source_id' => (string) ( $item['source_id'] ?? '' ),
 				'title'     => (string) ( $item['title'] ?? '' ),
 				'url'       => $url,
 				'image'     => (string) ( $item['image_url'] ?? '' ),
@@ -1794,10 +2090,10 @@ final class Blocks {
 					$idx = 0;
 					foreach ( $cards as $card ) :
 						$is_lead = $idx === 0;
-						$ext     = $card['external'] ? ' target="_blank" rel="noopener nofollow"' : '';
+						$link_attrs = self::news_link_attrs( $card );
 						?>
 						<article>
-							<a class="grid h-full gap-[0.65rem] rounded-card border border-[#dce6f2] bg-white pb-[0.9rem] text-brand no-underline" href="<?php echo esc_url( $card['url'] ); ?>"<?php echo $ext; ?>>
+							<a class="grid h-full gap-[0.65rem] rounded-card border border-[#dce6f2] bg-white pb-[0.9rem] text-brand no-underline" href="<?php echo esc_url( $card['url'] ); ?>"<?php echo $link_attrs; ?>>
 								<?php if ( $card['image'] !== '' ) : ?>
 									<img class="aspect-[16/9] w-full rounded-t-card bg-[#eef3f8] object-cover" src="<?php echo esc_url( $card['image'] ); ?>" loading="<?php echo $is_lead ? 'eager' : 'lazy'; ?>" alt="">
 								<?php endif; ?>
@@ -1819,6 +2115,7 @@ final class Blocks {
 				</div>
 			</div>
 		</section>
+		<?php echo self::render_zuidwest_article_modal(); ?>
 		<?php
 		return (string) ob_get_clean();
 	}
@@ -1834,6 +2131,7 @@ final class Blocks {
 			}
 
 			$cards[] = [
+				'source_id' => (string) ( $item['source_id'] ?? '' ),
 				'title'     => (string) ( $item['title'] ?? '' ),
 				'url'       => $url,
 				'image'     => (string) ( $item['image_url'] ?? '' ),
@@ -1867,6 +2165,7 @@ final class Blocks {
 				: (string) get_post_meta( $post->ID, '_rucphen_news_cover', true );
 
 			$cards[] = [
+				'source_id' => '',
 				'title'     => get_the_title( $post ),
 				'url'       => get_permalink( $post ),
 				'image'     => $image,
@@ -1884,18 +2183,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'nieuws/2026-05-nieuwe-site.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Lokaal nieuws', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Nieuws', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Nieuws van de redactie en gelabelde verwijzingen naar Zuidwest Update.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16" data-component="news-archive">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<nav class="mb-6 flex flex-wrap gap-2" aria-label="<?php esc_attr_e( 'Filter nieuws', 'radio-rucphen' ); ?>">
@@ -1905,10 +2192,10 @@ final class Blocks {
 				</nav>
 				<div class="grid grid-cols-3 gap-x-[1.4rem] gap-y-8 max-[767px]:grid-cols-1">
 					<?php foreach ( $cards as $idx => $card ) :
-						$ext = $card['external'] ? ' target="_blank" rel="noopener nofollow"' : '';
+						$link_attrs = self::news_link_attrs( $card );
 						?>
 						<article data-news-card data-news-source="<?php echo esc_attr( (string) $card['source'] ); ?>">
-							<a class="grid h-full gap-[0.65rem] rounded-card border border-[#dce6f2] bg-white pb-[0.9rem] text-brand no-underline" href="<?php echo esc_url( (string) $card['url'] ); ?>"<?php echo $ext; ?>>
+							<a class="grid h-full gap-[0.65rem] rounded-card border border-[#dce6f2] bg-white pb-[0.9rem] text-brand no-underline" href="<?php echo esc_url( (string) $card['url'] ); ?>"<?php echo $link_attrs; ?>>
 								<?php if ( $card['image'] !== '' ) : ?>
 									<img class="aspect-[16/9] w-full rounded-t-card bg-[#eef3f8] object-cover" src="<?php echo esc_url( (string) $card['image'] ); ?>" loading="<?php echo $idx < 3 ? 'eager' : 'lazy'; ?>" alt="">
 								<?php endif; ?>
@@ -1926,55 +2213,123 @@ final class Blocks {
 				</div>
 			</div>
 		</section>
+		<?php echo self::render_zuidwest_article_modal(); ?>
+		<?php
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * @param array<string, mixed> $card
+	 */
+	private static function news_link_attrs( array $card ): string {
+		$attrs = [];
+		if ( ! empty( $card['external'] ) ) {
+			$attrs[] = 'target="_blank"';
+			$attrs[] = 'rel="noopener nofollow"';
+		}
+
+		if ( ! empty( $card['external'] ) && ! empty( $card['source_id'] ) ) {
+			$attrs[] = 'data-zwu-modal-link';
+			$attrs[] = 'data-zwu-item="' . esc_attr( (string) $card['source_id'] ) . '"';
+			$attrs[] = 'aria-haspopup="dialog"';
+		}
+
+		return $attrs === [] ? '' : ' ' . implode( ' ', $attrs );
+	}
+
+	private static function render_zuidwest_article_modal(): string {
+		if ( self::$zuidwest_modal_printed ) {
+			return '';
+		}
+
+		self::$zuidwest_modal_printed = true;
+
+		ob_start();
+		?>
+		<dialog id="rucphen-zwu-modal" class="fixed inset-0 m-auto h-[min(92vh,900px)] w-[calc(100%_-_1rem)] max-w-[980px] overflow-hidden rounded-card border-0 bg-white p-0 shadow-[0_24px_80px_rgb(15_23_42_/_0.38)] [&::backdrop]:bg-ink/70 max-[767px]:h-[calc(100vh_-_1rem)]" data-zwu-modal aria-label="<?php esc_attr_e( 'Zuidwest Update artikel', 'radio-rucphen' ); ?>">
+			<div class="grid h-full grid-rows-[auto_minmax(0,1fr)]">
+				<header class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line bg-white px-4 py-3">
+					<div class="min-w-0">
+						<p class="m-0 text-[0.72rem] font-black uppercase tracking-[0.08em] text-brand"><?php esc_html_e( 'Zuidwest Update', 'radio-rucphen' ); ?></p>
+					</div>
+					<button class="inline-flex size-10 items-center justify-center rounded-sm border border-line bg-white text-brand hover:bg-[#e9eef7]" type="button" aria-label="<?php esc_attr_e( 'Sluiten', 'radio-rucphen' ); ?>" data-zwu-modal-close>
+						<svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m6.4 5.1 5.6 5.6 5.6-5.6 1.3 1.3-5.6 5.6 5.6 5.6-1.3 1.3-5.6-5.6-5.6 5.6-1.3-1.3 5.6-5.6-5.6-5.6z"/></svg>
+					</button>
+				</header>
+				<div class="relative min-h-0 bg-white">
+					<p class="absolute inset-x-4 top-4 z-10 rounded-sm border border-line bg-surface px-4 py-3 text-sm font-bold text-ink-soft" data-zwu-modal-status aria-live="polite"><?php esc_html_e( 'Artikel laden bij Zuidwest Update...', 'radio-rucphen' ); ?></p>
+					<iframe class="h-full w-full border-0 bg-white" title="<?php esc_attr_e( 'Zuidwest Update artikel', 'radio-rucphen' ); ?>" sandbox="allow-popups allow-popups-to-escape-sandbox" data-zwu-modal-frame></iframe>
+				</div>
+			</div>
+		</dialog>
 		<?php
 		return (string) ob_get_clean();
 	}
 
 	public static function render_video_grid(): string {
-		$videos = ZuidwestImporter::get_videos_cache();
+		$videos = array_slice( ZuidwestImporter::get_videos_cache(), 0, 4 );
 
 		ob_start();
 		?>
-		<section class="bg-brand-dark text-white py-16">
+		<section class="bg-[radial-gradient(circle_at_92%_16%,rgb(255_222_0_/_0.16),transparent_30%),linear-gradient(135deg,#003576_0%,#082a68_48%,#001f49_100%)] py-16 text-white">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 					<div>
 						<h2 class="font-display text-3xl font-extrabold leading-tight md:text-4xl"><?php esc_html_e( 'Video\'s uit de regio', 'radio-rucphen' ); ?></h2>
 						<p class="mt-1 text-white/75"><?php esc_html_e( 'Actuele beelden uit Etten-Leur, Halderberge, Roosendaal, Rucphen en Zundert.', 'radio-rucphen' ); ?></p>
 					</div>
-					<a class="inline-flex w-fit items-center gap-2 rounded-md border border-white/20 bg-white/10 px-4 py-2 text-sm font-bold no-underline hover:bg-white/15" href="<?php echo esc_url( home_url( '/video/' ) ); ?>"><?php esc_html_e( 'Alle video\'s', 'radio-rucphen' ); ?></a>
+					<a class="inline-flex w-fit items-center gap-2 rounded-md border border-white/45 bg-transparent px-4 py-2 text-sm font-bold text-white no-underline hover:bg-white/10" href="<?php echo esc_url( home_url( '/video/' ) ); ?>"><?php esc_html_e( 'Alle video\'s', 'radio-rucphen' ); ?></a>
 				</div>
-				<div class="grid gap-4 md:grid-cols-3">
+				<div class="grid auto-rows-[minmax(136px,auto)] grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)] gap-4 max-[1023px]:auto-rows-auto max-[1023px]:grid-cols-2 max-[767px]:grid-cols-1">
 					<?php
 					$idx = 0;
 					foreach ( $videos as $video ) :
 						$is_large = $idx === 0;
 						$link     = (string) ( $video['video_embed_url'] ?? $video['source_url'] ?? '' );
+						if ( $link === '' ) {
+							$idx++;
+							continue;
+						}
+
 						$ts       = strtotime( (string) ( $video['published_at'] ?? '' ) );
 						$pretty   = $ts ? wp_date( 'j F Y', $ts ) : '';
-						$meta     = trim( (string) ( $video['region_label'] ?? '' ) . ( $pretty !== '' ? ' &middot; ' . $pretty : '' ) );
+						$meta     = implode( ' &middot; ', array_filter( [ (string) ( $video['region_label'] ?? '' ), $pretty ] ) );
+						$title    = (string) ( $video['title'] ?? '' );
+						$excerpt  = (string) ( $video['excerpt'] ?? '' );
+
+						$article_class = $is_large ? 'row-span-3 max-[1023px]:col-span-2 max-[1023px]:row-span-1 max-[767px]:col-span-1' : '';
+						$link_class    = $is_large
+							? 'group grid h-full overflow-hidden rounded-card border border-cyan/45 bg-[#f8fbff] text-ink no-underline shadow-[0_24px_56px_rgb(0_14_45_/_0.32)] transition duration-[220ms] hover:-translate-y-0.5 hover:border-cyan hover:shadow-[0_30px_70px_rgb(0_14_45_/_0.38)]'
+							: 'group grid h-full grid-cols-[150px_minmax(0,1fr)] overflow-hidden rounded-card border border-cyan/45 bg-[#f8fbff] text-ink no-underline shadow-[0_24px_56px_rgb(0_14_45_/_0.32)] transition duration-[220ms] hover:-translate-y-0.5 hover:border-cyan hover:shadow-[0_30px_70px_rgb(0_14_45_/_0.38)] max-[1023px]:grid-cols-1';
+						$media_class   = $is_large
+							? 'relative block aspect-[16/9] overflow-hidden bg-[#dbe5f4]'
+							: 'relative block min-h-[136px] overflow-hidden bg-[#dbe5f4] max-[1023px]:aspect-[16/9]';
+						$play_class    = $is_large
+							? 'absolute left-4 top-4 grid size-16 place-items-center rounded-full bg-accent text-brand shadow-[0_14px_30px_rgb(0_0_0_/_0.24)]'
+							: 'absolute left-3 top-3 grid size-11 place-items-center rounded-full bg-accent text-brand shadow-[0_14px_30px_rgb(0_0_0_/_0.24)]';
+						$content_class = $is_large
+							? 'grid content-start gap-[0.45rem] px-[1.35rem] py-5'
+							: 'grid content-center gap-[0.45rem] p-4';
 						?>
-						<article class="<?php echo $is_large ? 'md:col-span-2 md:row-span-2 ' : ''; ?>group relative overflow-hidden rounded-card bg-white/5 shadow-md transition hover:bg-white/10">
-							<a class="block no-underline text-white" href="<?php echo esc_url( $link ); ?>" target="_blank" rel="noopener nofollow">
-								<div class="relative aspect-[16/9] overflow-hidden">
+						<article class="<?php echo esc_attr( $article_class ); ?>">
+							<a class="<?php echo esc_attr( $link_class ); ?>" href="<?php echo esc_url( $link ); ?>" target="_blank" rel="noopener nofollow">
+								<span class="<?php echo esc_attr( $media_class ); ?>">
 									<?php if ( ! empty( $video['image_url'] ) ) : ?>
-										<img class="h-full w-full object-cover transition group-hover:scale-105" src="<?php echo esc_url( (string) $video['image_url'] ); ?>" loading="lazy" alt="">
+										<img class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.035]" src="<?php echo esc_url( (string) $video['image_url'] ); ?>" loading="<?php echo $is_large ? 'eager' : 'lazy'; ?>" alt="">
 									<?php endif; ?>
-									<span class="absolute inset-0 grid place-items-center bg-black/20">
-										<span class="grid h-14 w-14 place-items-center rounded-full bg-accent text-ink shadow-md">
-											<svg class="h-6 w-6 translate-x-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-										</span>
+									<span class="<?php echo esc_attr( $play_class ); ?>">
+										<svg class="<?php echo $is_large ? 'size-7' : 'size-5'; ?> translate-x-0.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
 									</span>
-								</div>
-								<div class="grid gap-2 p-4">
+								</span>
+								<span class="<?php echo esc_attr( $content_class ); ?>">
 									<?php if ( $meta !== '' ) : ?>
-										<span class="text-xs font-bold uppercase tracking-wider text-white/70"><?php echo wp_kses_post( $meta ); ?></span>
+										<span class="inline-flex w-fit max-w-full rounded-full bg-accent px-[0.58rem] py-[0.24rem] text-[0.72rem] font-black uppercase leading-[1.1] text-brand"><?php echo wp_kses_post( $meta ); ?></span>
 									<?php endif; ?>
-									<strong class="font-display <?php echo $is_large ? 'text-2xl' : 'text-lg'; ?> font-extrabold leading-tight"><?php echo esc_html( (string) ( $video['title'] ?? '' ) ); ?></strong>
-									<?php if ( $is_large && ! empty( $video['excerpt'] ) ) : ?>
-										<span class="text-sm text-white/80"><?php echo esc_html( (string) $video['excerpt'] ); ?></span>
+									<strong class="font-display <?php echo $is_large ? 'text-[clamp(1.5rem,1.15rem_+_1.35vw,2.5rem)]' : 'line-clamp-3 text-[1.02rem]'; ?> font-black leading-[1.16] text-ink"><?php echo esc_html( $title ); ?></strong>
+									<?php if ( $is_large && $excerpt !== '' ) : ?>
+										<span class="line-clamp-3 max-w-[64ch] text-[0.98rem] text-ink-soft"><?php echo esc_html( $excerpt ); ?></span>
 									<?php endif; ?>
-								</div>
+								</span>
 							</a>
 						</article>
 						<?php
@@ -1993,18 +2348,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'video/regionaal-evenement.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Regiovideo', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Video\'s uit de regio', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Actuele video\'s uit Rucphen en omliggende gemeenten, met duidelijke regio-aanduiding per kaart.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="grid grid-cols-3 gap-x-[1.4rem] gap-y-8 max-[767px]:grid-cols-1">
@@ -2135,18 +2478,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'events/rucphen-open-dag.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Acties', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Lokale agenda', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Activiteiten in Rucphen en omgeving, met kalenderlinks per evenement.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16" data-component="events-archive">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<nav class="mb-6 flex flex-wrap gap-2" aria-label="<?php esc_attr_e( 'Filter agenda op maand', 'radio-rucphen' ); ?>">
@@ -2234,7 +2565,7 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	public static function render_frequency_page(): string {
+	public static function render_frequency_options(): string {
 		$f = Settings::get( Settings::OPTION_FREQUENCIES );
 		$fm = trim( (string) ( $f['fm_mhz'] ?? '' ) );
 		$dab = str_replace( ',', ' /', (string) ( $f['dab_blocks'] ?? '' ) );
@@ -2244,18 +2575,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'programs/non-stop-muziek.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Frequenties', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Zo ontvang je Radio Rucphen', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Luister via FM, DAB+, kabel, deze website en slimme speakers.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<div class="grid grid-cols-4 gap-5 max-[1023px]:grid-cols-2 max-[767px]:grid-cols-1">
@@ -2330,7 +2649,7 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	public static function render_contact_page(): string {
+	public static function render_contact_details(): string {
 		$contact = Settings::get( Settings::OPTION_CONTACT );
 		$studio_email = (string) ( $contact['email_studio'] ?? '' );
 		$redactie_email = (string) ( $contact['email_redactie'] ?? '' );
@@ -2340,18 +2659,6 @@ final class Blocks {
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'programs/wakker-met-rucphen.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Studio en redactie', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Contact', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Voor verzoekjes gebruik je WhatsApp. Voor redactie en algemene vragen kun je mailen.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?> grid grid-cols-2 gap-5 max-[767px]:grid-cols-1">
 				<article class="rounded-card border border-[#dce6f2] bg-white p-6 shadow-sm">
@@ -2377,26 +2684,9 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	public static function render_about_page(): string {
-		$org = Settings::get( Settings::OPTION_ORGANIZATION );
-		$kvk = (string) ( $org['kvk'] ?? 'TBD' );
-		$rsin = (string) ( $org['rsin'] ?? 'TBD' );
-		$iban = (string) ( $org['iban'] ?? 'TBD' );
-
+	public static function render_about_story(): string {
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'programs/avond-hits.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Stichting Rucphen RTV', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php esc_html_e( 'Over Radio Rucphen', 'radio-rucphen' ); ?></h1>
-					<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php esc_html_e( 'Lokale radio, gemaakt door vrijwilligers en gericht op de gemeente Rucphen.', 'radio-rucphen' ); ?></p>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?> grid grid-cols-2 gap-8 max-[767px]:grid-cols-1">
 				<div class="text-ink">
@@ -2412,7 +2702,13 @@ final class Blocks {
 				</div>
 			</div>
 		</section>
+		<?php
+		return (string) ob_get_clean();
+	}
 
+	public static function render_about_board(): string {
+		ob_start();
+		?>
 		<section class="bg-surface py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<h2 class="font-display text-[2rem] font-extrabold leading-[1.08] text-ink"><?php esc_html_e( 'Bestuur', 'radio-rucphen' ); ?></h2>
@@ -2432,7 +2728,18 @@ final class Blocks {
 				</div>
 			</div>
 		</section>
+		<?php
+		return (string) ob_get_clean();
+	}
 
+	public static function render_about_anbi(): string {
+		$org = Settings::get( Settings::OPTION_ORGANIZATION );
+		$kvk = (string) ( $org['kvk'] ?? 'TBD' );
+		$rsin = (string) ( $org['rsin'] ?? 'TBD' );
+		$iban = (string) ( $org['iban'] ?? 'TBD' );
+
+		ob_start();
+		?>
 		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
 				<h2 class="font-display text-[2rem] font-extrabold leading-[1.08] text-ink"><?php esc_html_e( 'ANBI-gegevens', 'radio-rucphen' ); ?></h2>
@@ -2451,7 +2758,7 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	public static function render_legal_page(): string {
+	public static function render_legal_content(): string {
 		$page = get_queried_object();
 		$slug = $page instanceof \WP_Post ? $page->post_name : '';
 		$org = Settings::get( Settings::OPTION_ORGANIZATION );
@@ -2523,28 +2830,9 @@ final class Blocks {
 		];
 
 		$data = $pages[ $slug ] ?? $pages['privacy'];
-		$intro_parts = explode( ' Concepttekst.', (string) $data['intro'], 2 );
-		$lead = trim( $intro_parts[0] );
-		if ( $lead !== '' && ! str_ends_with( $lead, '.' ) ) {
-			$lead .= '.';
-		}
 
 		ob_start();
 		?>
-		<section class="relative isolate grid min-h-[320px] items-end overflow-hidden bg-brand-dark py-16 text-white">
-			<img class="absolute inset-0 -z-20 h-full w-full object-cover" src="<?php echo esc_url( self::theme_img( 'nieuws/2026-05-nieuwe-site.jpg' ) ); ?>" alt="">
-			<span class="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgb(15_23_42_/_0.88),rgb(0_53_118_/_0.64)_58%,rgb(15_23_42_/_0.42))]" aria-hidden="true"></span>
-			<div class="<?php echo esc_attr( self::CONTAINER ); ?>">
-				<div class="max-w-[760px]">
-					<p class="mb-[0.8rem] inline-flex items-center gap-[0.45rem] text-[0.88rem] font-black uppercase text-[#bfdbfe]"><?php esc_html_e( 'Juridisch', 'radio-rucphen' ); ?></p>
-					<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08]"><?php echo esc_html( $data['title'] ); ?></h1>
-					<?php if ( $lead !== '' ) : ?>
-						<p class="mt-4 max-w-[720px] text-[1.18rem] text-[#e2e8f0]"><?php echo esc_html( $lead ); ?></p>
-					<?php endif; ?>
-				</div>
-			</div>
-		</section>
-
 		<section class="bg-bg-app py-12">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?> max-w-[820px]">
 				<div class="border-l-4 border-accent bg-[#fff8df] p-4 text-ink">
@@ -2569,18 +2857,15 @@ final class Blocks {
 		return (string) ob_get_clean();
 	}
 
-	public static function render_newsletter_page(): string {
+	public static function render_newsletter_signup(): string {
 		$news = Settings::get( Settings::OPTION_NEWSLETTER );
 		$href = self::whatsapp_url( (string) ( $news['fallback_whatsapp_text'] ?? 'Zet mij op de nieuwsbrief-lijst' ) );
 
 		ob_start();
 		?>
-		<section class="bg-bg-app py-12">
+		<section class="bg-bg-app py-16">
 			<div class="<?php echo esc_attr( self::CONTAINER ); ?> max-w-[900px]">
-				<p class="mb-[0.8rem] inline-flex items-center rounded-full bg-accent px-[0.72rem] py-[0.28rem] text-[0.78rem] font-black uppercase text-brand"><?php esc_html_e( 'Blijf op de hoogte', 'radio-rucphen' ); ?></p>
-				<h1 class="m-0 font-display text-[clamp(2.2rem,2rem_+_1.6vw,4rem)] font-extrabold leading-[1.08] text-ink"><?php esc_html_e( 'Nieuwsbrief', 'radio-rucphen' ); ?></h1>
-				<p class="mt-4 max-w-[760px] text-[1.12rem] leading-7 text-ink-soft"><?php esc_html_e( 'De nieuwsbrief komt binnenkort. Voor MVP loopt aanmelden via WhatsApp.', 'radio-rucphen' ); ?></p>
-				<div class="mt-8 rounded-card border border-line bg-white p-6 shadow-sm">
+				<div class="rounded-card border border-line bg-white p-6 shadow-sm">
 					<h2 class="font-display text-2xl font-extrabold leading-tight text-ink"><?php esc_html_e( 'Aanmelden', 'radio-rucphen' ); ?></h2>
 					<p class="mt-3 text-ink-soft"><?php esc_html_e( 'Onze nieuwsbrief komt binnenkort. Stuur ons een appje als je alvast op de lijst wilt.', 'radio-rucphen' ); ?></p>
 					<a class="mt-5 inline-flex min-h-11 items-center rounded-sm bg-brand px-4 py-2 font-extrabold text-white no-underline hover:bg-brand-dark" href="<?php echo esc_url( $href ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Schrijf je in voor de nieuwsbrief', 'radio-rucphen' ); ?></a>

@@ -19,7 +19,7 @@
             "palette": [
                 { "slug": "brand", "color": "#003576", "name": "Brand" },
                 { "slug": "brand-dark", "color": "#00254F", "name": "Brand donker" },
-                { "slug": "accent", "color": "#FFDE00", "name": "Accent" },
+                { "slug": "accent", "color": "#FFDE00", "name": "Accent geel" },
                 { "slug": "cyan", "color": "#00A7DF", "name": "Cyan" },
                 { "slug": "ink", "color": "#0F172A", "name": "Inkt" },
                 { "slug": "ink-soft", "color": "#475569", "name": "Inkt zacht" },
@@ -111,16 +111,8 @@
         }
     },
     "customTemplates": [
-        { "name": "page-contact", "title": "Contact", "postTypes": ["page"] },
-        { "name": "page-frequenties", "title": "Frequenties", "postTypes": ["page"] },
-        { "name": "page-nieuws", "title": "Nieuwsoverzicht", "postTypes": ["page"] },
-        { "name": "page-video", "title": "Video-overzicht", "postTypes": ["page"] },
-        { "name": "page-over-ons", "title": "Over ons", "postTypes": ["page"] },
-        { "name": "page-nieuwsbrief", "title": "Nieuwsbrief", "postTypes": ["page"] },
-        { "name": "page-colofon", "title": "Colofon", "postTypes": ["page"] },
-        { "name": "page-cookies", "title": "Cookies", "postTypes": ["page"] },
-        { "name": "page-disclaimer", "title": "Disclaimer", "postTypes": ["page"] },
-        { "name": "page-privacy", "title": "Privacy", "postTypes": ["page"] }
+        { "name": "page-hero", "title": "Hero-pagina", "postTypes": ["page"] },
+        { "name": "page-plain", "title": "Plain-pagina", "postTypes": ["page"] }
     ],
     "templateParts": [
         { "name": "header", "title": "Header", "area": "header" },
@@ -135,14 +127,9 @@
         { "name": "podcast-archive-content", "title": "Podcast archief inhoud", "area": "uncategorized" },
         { "name": "podcast-single-content", "title": "Podcast detail inhoud", "area": "uncategorized" },
         { "name": "news-archive-content", "title": "Nieuws archief inhoud", "area": "uncategorized" },
-        { "name": "video-archive-content", "title": "Video archief inhoud", "area": "uncategorized" },
         { "name": "events-archive-content", "title": "Agenda archief inhoud", "area": "uncategorized" },
-        { "name": "frequency-page-content", "title": "Frequenties inhoud", "area": "uncategorized" },
-        { "name": "contact-page-content", "title": "Contact inhoud", "area": "uncategorized" },
-        { "name": "about-page-content", "title": "Over ons inhoud", "area": "uncategorized" },
-        { "name": "legal-page-content", "title": "Juridische pagina inhoud", "area": "uncategorized" },
-        { "name": "newsletter-page-content", "title": "Nieuwsbrief inhoud", "area": "uncategorized" },
         { "name": "page-content", "title": "Standaard pagina inhoud", "area": "uncategorized" },
+        { "name": "page-plain-content", "title": "Plain pagina inhoud", "area": "uncategorized" },
         { "name": "single-content", "title": "Standaard artikel inhoud", "area": "uncategorized" },
         { "name": "archive-content", "title": "Standaard archief inhoud", "area": "uncategorized" },
         { "name": "search-content", "title": "Zoekresultaten inhoud", "area": "uncategorized" },

@@ -16,9 +16,18 @@
 	var ServerSideRender = wp.serverSideRender;
 	var BlockControls = wp.blockEditor && wp.blockEditor.BlockControls;
 	var InnerBlocks = wp.blockEditor && wp.blockEditor.InnerBlocks;
+	var templateOnlyBlocks = {
+		'rucphen/template-main': true,
+		'rucphen/page-hero': true,
+		'rucphen/breadcrumbs': true,
+		'rucphen/hero-text': true
+	};
 
 	var blocks = [
-		{ name: 'rucphen/template-main',       title: 'Template main',                     category: 'theme', inner: true },
+		{ name: 'rucphen/template-main',       title: 'Template main',                     category: 'theme', inner: true, attributes: { contained: { type: 'boolean', default: false } } },
+		{ name: 'rucphen/page-hero',           title: 'Pagina hero',                       category: 'theme', inner: true, hero: true, attributes: { fallbackImage: { type: 'string', default: '' } } },
+		{ name: 'rucphen/breadcrumbs',         title: 'Broodkruimels',                     category: 'theme', attributes: { variant: { type: 'string', default: 'hero' } } },
+		{ name: 'rucphen/hero-text',           title: 'Hero-tekst',                        category: 'theme', attributes: { fallbackText: { type: 'string', default: '' } } },
 		{ name: 'rucphen/site-header',         title: 'Site header',                       category: 'theme' },
 		{ name: 'rucphen/site-footer',         title: 'Site footer',                       category: 'theme' },
 		{ name: 'rucphen/live-hero',           title: 'Live hero',                         category: 'radio-rucphen' },
@@ -38,12 +47,14 @@
 		{ name: 'rucphen/events-grid',         title: 'Agenda',                            category: 'radio-rucphen' },
 		{ name: 'rucphen/events-archive',      title: 'Agenda archief',                    category: 'radio-rucphen' },
 		{ name: 'rucphen/frequency-grid',      title: 'Frequenties',                       category: 'radio-rucphen' },
-		{ name: 'rucphen/frequency-page',      title: 'Frequenties pagina',                category: 'radio-rucphen' },
+		{ name: 'rucphen/frequency-options',   title: 'Luisteropties',                     category: 'radio-rucphen' },
 		{ name: 'rucphen/whatsapp-cta',        title: 'WhatsApp verzoekje CTA',            category: 'radio-rucphen' },
-		{ name: 'rucphen/contact-page',        title: 'Contact pagina',                    category: 'radio-rucphen' },
-		{ name: 'rucphen/about-page',          title: 'Over ons pagina',                   category: 'radio-rucphen' },
-		{ name: 'rucphen/legal-page',          title: 'Juridische pagina',                 category: 'radio-rucphen' },
-		{ name: 'rucphen/newsletter-page',     title: 'Nieuwsbrief pagina',                category: 'radio-rucphen' },
+		{ name: 'rucphen/contact-details',     title: 'Contactgegevens',                   category: 'radio-rucphen' },
+		{ name: 'rucphen/about-story',         title: 'Over ons verhaal',                  category: 'radio-rucphen' },
+		{ name: 'rucphen/about-board',         title: 'Bestuur',                           category: 'radio-rucphen' },
+		{ name: 'rucphen/about-anbi',          title: 'ANBI gegevens',                     category: 'radio-rucphen' },
+		{ name: 'rucphen/legal-content',       title: 'Juridische inhoud',                 category: 'radio-rucphen' },
+		{ name: 'rucphen/newsletter-signup',   title: 'Nieuwsbrief aanmelden',             category: 'radio-rucphen' },
 		{ name: 'rucphen/newsletter-cta',      title: 'Nieuwsbrief CTA',                   category: 'radio-rucphen' },
 		{ name: 'rucphen/program-quick-links', title: 'Snelle programma-links',            category: 'radio-rucphen' }
 	];
@@ -56,18 +67,27 @@
 				category:   b.category,
 				icon:       'layout',
 				description: 'Radio Rucphen: ' + b.title,
-				attributes: {
-					contained: {
-						type: 'boolean',
-						default: false
-					}
-				},
-				supports: { html: false, align: false, customClassName: false },
+				attributes: b.attributes || {},
+				supports: { html: false, align: false, customClassName: false, inserter: ! templateOnlyBlocks[ b.name ] },
 				edit: function () {
+					var blockTemplate = b.hero ? [
+						[ 'rucphen/breadcrumbs' ],
+						[ 'core/post-title', { level: 1 } ],
+						[ 'rucphen/hero-text' ]
+					] : undefined;
 					return el(
-						'main',
-						{ className: 'rucphen-template-main-editor', style: { padding: '1rem', border: '1px dashed #cbd5e1', borderRadius: '8px' } },
-						InnerBlocks ? el( InnerBlocks ) : b.title
+						b.hero ? 'section' : 'main',
+						{
+							className: b.hero ? 'rucphen-page-hero-editor' : 'rucphen-template-main-editor',
+							style: {
+								padding: b.hero ? '2rem' : '1rem',
+								border: '1px dashed #cbd5e1',
+								borderRadius: '8px',
+								background: b.hero ? '#003576' : undefined,
+								color: b.hero ? '#fff' : undefined
+							}
+						},
+						InnerBlocks ? el( InnerBlocks, { template: blockTemplate } ) : b.title
 					);
 				},
 				save: function () {
@@ -83,8 +103,9 @@
 			category:   b.category,
 			icon:       'microphone',
 			description: 'Radio Rucphen: ' + b.title,
-			supports:   { html: false, align: false, customClassName: false },
-			edit: function () {
+			attributes: b.attributes || {},
+			supports:   { html: false, align: false, customClassName: false, inserter: ! templateOnlyBlocks[ b.name ] },
+			edit: function ( props ) {
 				if ( ! ServerSideRender ) {
 					return el(
 						'div',
@@ -97,6 +118,7 @@
 					{ className: 'rucphen-block-ssr' },
 					el( ServerSideRender, {
 						block: b.name,
+						attributes: props.attributes || {},
 						EmptyResponsePlaceholder: function () {
 							return el(
 								'div',

@@ -312,6 +312,109 @@
 		});
 	}
 
+	function bindZuidwestModal() {
+		const dialog = document.getElementById('rucphen-zwu-modal');
+		if (!dialog) return;
+
+		const frame = dialog.querySelector('[data-zwu-modal-frame]');
+		const status = dialog.querySelector('[data-zwu-modal-status]');
+		const closeBtn = dialog.querySelector('[data-zwu-modal-close]');
+		if (!frame || !status) return;
+
+		function showDialog() {
+			if (typeof dialog.showModal === 'function') {
+				if (!dialog.open) dialog.showModal();
+			} else {
+				dialog.setAttribute('open', '');
+			}
+		}
+
+		function closeDialog() {
+			if (typeof dialog.close === 'function') dialog.close();
+			else dialog.removeAttribute('open');
+			frame.srcdoc = '';
+		}
+
+		function fallbackDoc(docTitle, message, sourceUrl) {
+			return '<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+				'<style>body{margin:0;padding:28px;font-family:Inter,Arial,sans-serif;color:#0f172a;line-height:1.55}a{color:#003576;font-weight:800}</style>' +
+				'<title>' + escapeHtml(docTitle) + '</title></head><body><h1>' + escapeHtml(docTitle) + '</h1><p>' + escapeHtml(message) + '</p>' +
+				(sourceUrl ? '<p><a href="' + escapeHtml(sourceUrl) + '" target="_blank" rel="noopener nofollow">Open het artikel op Zuidwest Update</a></p>' : '') +
+				'</body></html>';
+		}
+
+		function cardTitle(link) {
+			const cardHeading = link.querySelector('strong');
+			const text = cardHeading ? cardHeading.textContent.trim() : '';
+			return text || 'Nieuwsbericht';
+		}
+
+		function sendZuidwestPageview(sourceUrl) {
+			if (!sourceUrl || !window.fetch) return;
+			const payload = {
+				n: 'pageview',
+				v: 3,
+				u: sourceUrl,
+				d: 'zuidwestupdate.nl',
+				r: window.location.href,
+			};
+
+			fetch('https://stats.zuidwesttv.nl/api/event', {
+				method: 'POST',
+				headers: { 'Content-Type': 'text/plain' },
+				keepalive: true,
+				body: JSON.stringify(payload),
+			}).catch(() => {});
+		}
+
+		async function openArticle(link) {
+			const id = link.getAttribute('data-zwu-item') || '';
+			if (!id) return;
+
+			const sourceUrl = link.href;
+			const initialTitle = cardTitle(link);
+			status.hidden = false;
+			status.textContent = 'Artikel laden bij Zuidwest Update...';
+			frame.srcdoc = fallbackDoc(initialTitle, 'Artikel laden...', '');
+			showDialog();
+			sendZuidwestPageview(sourceUrl);
+
+			try {
+				const restRoot = boot.restRoot || '/wp-json/radio-rucphen/v1/';
+				const url = restRoot + 'zuidwest-article?id=' + encodeURIComponent(id) + '&_=' + Date.now();
+				const res = await fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } });
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data && data.message ? data.message : 'Laden mislukt.');
+				}
+
+				frame.srcdoc = data.html || fallbackDoc(data.title || initialTitle, 'Geen artikelinhoud gevonden.', sourceUrl);
+				status.hidden = true;
+			} catch (err) {
+				const message = err && err.message ? err.message : 'Artikel laden mislukt.';
+				status.hidden = false;
+				status.textContent = message;
+				frame.srcdoc = fallbackDoc(initialTitle, message, sourceUrl);
+			}
+		}
+
+		document.addEventListener('click', (evt) => {
+			if (evt.defaultPrevented || evt.button !== 0 || evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.altKey) return;
+			const link = evt.target.closest('[data-zwu-modal-link]');
+			if (!link) return;
+			evt.preventDefault();
+			openArticle(link);
+		});
+
+		if (closeBtn) closeBtn.addEventListener('click', closeDialog);
+		dialog.addEventListener('click', (evt) => {
+			if (evt.target === dialog) closeDialog();
+		});
+		dialog.addEventListener('close', () => {
+			frame.srcdoc = '';
+		});
+	}
+
 	function bindEventsArchive() {
 		const root = document.querySelector('[data-component="events-archive"]');
 		if (!root) return;
@@ -388,6 +491,7 @@
 		bindProgramGuide();
 		bindPodcastArchive();
 		bindNewsArchive();
+		bindZuidwestModal();
 		bindEventsArchive();
 		bindSearch();
 		connectWebSocket();

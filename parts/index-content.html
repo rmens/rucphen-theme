@@ -1,16 +1,24 @@
-<!-- wp:rucphen/template-main {"contained":true} -->
-	<!-- wp:query {"query":{"perPage":12,"postType":"post","order":"desc","orderBy":"date"}} -->
-	<div class="wp-block-query">
-		<!-- wp:post-template -->
-			<!-- wp:post-featured-image {"isLink":true} /-->
-			<!-- wp:post-title {"isLink":true,"level":2} /-->
-			<!-- wp:post-excerpt /-->
-		<!-- /wp:post-template -->
-		<!-- wp:query-pagination -->
-			<!-- wp:query-pagination-previous /-->
-			<!-- wp:query-pagination-numbers /-->
-			<!-- wp:query-pagination-next /-->
-		<!-- /wp:query-pagination -->
+<!-- wp:rucphen/template-main -->
+	<!-- wp:rucphen/page-hero -->
+		<!-- wp:rucphen/breadcrumbs /-->
+		<!-- wp:heading {"level":1} --><h1>Berichten</h1><!-- /wp:heading -->
+	<!-- /wp:rucphen/page-hero -->
+	<!-- wp:group {"className":"mx-auto w-[min(100%_-_2rem,var(--spacing-container))] py-12","layout":{"type":"default"}} -->
+	<div class="wp-block-group mx-auto w-[min(100%_-_2rem,var(--spacing-container))] py-12">
+		<!-- wp:query {"query":{"perPage":12,"postType":"post","order":"desc","orderBy":"date"}} -->
+		<div class="wp-block-query">
+			<!-- wp:post-template -->
+				<!-- wp:post-featured-image {"isLink":true} /-->
+				<!-- wp:post-title {"isLink":true,"level":2} /-->
+				<!-- wp:post-excerpt /-->
+			<!-- /wp:post-template -->
+			<!-- wp:query-pagination -->
+				<!-- wp:query-pagination-previous /-->
+				<!-- wp:query-pagination-numbers /-->
+				<!-- wp:query-pagination-next /-->
+			<!-- /wp:query-pagination -->
+		</div>
+		<!-- /wp:query -->
 	</div>
-	<!-- /wp:query -->
+	<!-- /wp:group -->
 <!-- /wp:rucphen/template-main -->

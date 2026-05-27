@@ -28,6 +28,7 @@ add_action(
 		\RadioRucphen\Meta::register();
 		\RadioRucphen\Settings::register();
 		\RadioRucphen\ZuidwestImporter::register();
+		\RadioRucphen\ZuidwestArticle::register();
 		\RadioRucphen\NowPlaying::register();
 		\RadioRucphen\SeoCompat::register();
 		\RadioRucphen\IconRegistry::register();

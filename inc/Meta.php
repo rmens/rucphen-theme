@@ -13,17 +13,25 @@ defined( 'ABSPATH' ) || exit;
 
 final class Meta {
 
-	private const PROGRAM_NONCE = 'rucphen_program_meta_nonce';
+	public const HERO_TEXT_META = '_rucphen_hero_text';
+
+	private const HERO_NONCE      = 'rucphen_hero_meta_nonce';
+	private const PROGRAM_NONCE   = 'rucphen_program_meta_nonce';
 	private const PRESENTER_NONCE = 'rucphen_presenter_meta_nonce';
 
 	public static function register(): void {
 		add_action( 'init', [ self::class, 'register_meta' ], 20 );
 		add_action( 'add_meta_boxes', [ self::class, 'add_meta_boxes' ] );
+		add_action( 'save_post', [ self::class, 'save_hero_meta' ], 10, 2 );
 		add_action( 'save_post_' . PostTypes::PROGRAM, [ self::class, 'save_program_meta' ], 10, 2 );
 		add_action( 'save_post_' . PostTypes::PRESENTER, [ self::class, 'save_presenter_programs' ], 10, 2 );
 	}
 
 	public static function register_meta(): void {
+		foreach ( self::hero_post_types() as $post_type ) {
+			self::register_field( $post_type, self::HERO_TEXT_META, 'textarea' );
+		}
+
 		$program_fields = [
 			'_rucphen_program_short_description' => 'string',
 			'_rucphen_program_long_description'  => 'string',
@@ -76,6 +84,17 @@ final class Meta {
 	}
 
 	public static function add_meta_boxes(): void {
+		foreach ( self::hero_post_types() as $post_type ) {
+			add_meta_box(
+				'rucphen-page-hero',
+				__( 'Hero', 'radio-rucphen' ),
+				[ self::class, 'render_hero_box' ],
+				$post_type,
+				'normal',
+				'default'
+			);
+		}
+
 		add_meta_box(
 			'rucphen-program-broadcast',
 			__( 'Uitzending', 'radio-rucphen' ),
@@ -93,6 +112,19 @@ final class Meta {
 			'side',
 			'default'
 		);
+	}
+
+	public static function render_hero_box( \WP_Post $post ): void {
+		wp_nonce_field( self::HERO_NONCE, self::HERO_NONCE );
+
+		$text = (string) get_post_meta( $post->ID, self::HERO_TEXT_META, true );
+		?>
+		<p>
+			<label for="rucphen_hero_text"><?php esc_html_e( 'Hero-tekst', 'radio-rucphen' ); ?></label>
+		</p>
+		<textarea id="rucphen_hero_text" name="rucphen_hero_text" class="widefat" rows="3"><?php echo esc_textarea( $text ); ?></textarea>
+		<p class="description"><?php esc_html_e( 'Wordt getoond door het Hero-tekst block. Laat leeg om de samenvatting te gebruiken.', 'radio-rucphen' ); ?></p>
+		<?php
 	}
 
 	public static function render_program_box( \WP_Post $post ): void {
@@ -184,6 +216,23 @@ final class Meta {
 			</p>
 			<?php
 		}
+	}
+
+	public static function save_hero_meta( int $post_id, \WP_Post $post ): void {
+		if ( ! in_array( $post->post_type, self::hero_post_types(), true ) || ! self::can_save( $post_id, self::HERO_NONCE ) ) {
+			return;
+		}
+
+		$text = isset( $_POST['rucphen_hero_text'] )
+			? sanitize_textarea_field( (string) wp_unslash( $_POST['rucphen_hero_text'] ) )
+			: '';
+
+		if ( $text === '' ) {
+			delete_post_meta( $post_id, self::HERO_TEXT_META );
+			return;
+		}
+
+		update_post_meta( $post_id, self::HERO_TEXT_META, $text );
 	}
 
 	public static function save_program_meta( int $post_id, \WP_Post $post ): void {
@@ -414,6 +463,7 @@ final class Meta {
 		return match ( $type ) {
 			'integer'   => static fn( $v ) => (int) $v,
 			'boolean'   => static fn( $v ) => (bool) $v,
+			'textarea'  => static fn( $v ) => is_string( $v ) ? sanitize_textarea_field( $v ) : '',
 			'array_int' => static function ( $v ): array {
 				if ( ! is_array( $v ) ) {
 					return [];
@@ -422,6 +472,20 @@ final class Meta {
 			},
 			default     => static fn( $v ) => is_string( $v ) ? sanitize_text_field( $v ) : '',
 		};
+	}
+
+	/**
+	 * @return array<int, string>
+	 */
+	private static function hero_post_types(): array {
+		return [
+			'page',
+			'post',
+			PostTypes::PROGRAM,
+			PostTypes::PRESENTER,
+			PostTypes::PODCAST,
+			PostTypes::EVENT,
+		];
 	}
 
 	/**

@@ -17,8 +17,8 @@ fi
 
 # 2. Standaardpagina's
 declare -a PAGES=(
-    "nieuws:Nieuws:page-nieuws"
-    "video:Video:page-video"
+    "nieuws:Nieuws:"
+    "video:Video:"
     "frequenties:Frequenties:"
     "contact:Contact:"
     "over-ons:Over ons:"
@@ -34,7 +34,7 @@ page_content() {
         frequenties) echo '<!-- wp:rucphen/frequency-grid /-->' ;;
         contact)     echo '<!-- wp:rucphen/whatsapp-cta /-->' ;;
         nieuwsbrief) echo '<!-- wp:rucphen/newsletter-cta /-->' ;;
-        video)       echo '<!-- wp:rucphen/video-grid /-->' ;;
+        video)       echo '<!-- wp:rucphen/video-archive /-->' ;;
         *)           echo '' ;;
     esac
 }
